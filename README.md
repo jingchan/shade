@@ -1,4 +1,4 @@
-# Midi App
+# Card App
 
 Link: https://midi-inky.vercel.app
 
