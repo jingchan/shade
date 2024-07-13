@@ -20,6 +20,8 @@
     "prepare": "npx simple-git-hooks"
   },
   "dependencies": {
+    "@vueuse/core": "^10.11.0",
+    "gsap": "^3.12.5",
     "vue": "^3.4.30"
   },
   "devDependencies": {
