@@ -1,7 +1,7 @@
-import type { Size } from './types';
-import { Angle, Point } from './types';
-import { DEFAULT_CARD_SIZE } from './card';
-import type { CardStack } from './cardStack';
+import type { Size } from '../types';
+import { Angle, Point } from '../types';
+import { DEFAULT_CARD_SIZE } from '../card';
+import type { CardStack } from '../cardStack';
 
 export interface PositioningInfo {
   center: Point;

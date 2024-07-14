@@ -6,6 +6,8 @@ interface CardIterator {
 }
 
 export class CardStack implements CardIterator {
+  static EMPTY = new CardStack([]);
+
   constructor(public cards: Card[]) {}
 
   [Symbol.iterator](): Iterator<Card> {

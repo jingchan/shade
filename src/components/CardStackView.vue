@@ -3,14 +3,17 @@ import { useElementSize } from '@vueuse/core';
 import { ref } from 'vue';
 import type { CardStack } from '../cardStack';
 import type { Card } from '../card';
-import type { PositioningInfo } from '../positioning';
-import { calculateArcPositions } from '../positioning';
-import { Angle, Size } from '../types';
+import type { PositioningInfo } from '../positioning/arc';
+import { calculateArcPositions } from '../positioning/arc';
+import { FreePositioning } from '../positioning/free';
+import { Angle, Point, Size } from '../types';
 import CardView from './CardView.vue';
 
 const props = defineProps<{
   cards: CardStack;
 }>();
+const rootEl = ref(null);
+const { width, height } = useElementSize(rootEl);
 
 const DRAG_THRESHOLD_RADIUS = 5;
 // const DRAG_THRESHOLD_DELAY_MS = 1000;
@@ -19,6 +22,17 @@ enum TrackStates {
   NONE,
   DRAGGING,
 };
+
+// Free Positioning example usage.
+const positioner = ref(new FreePositioning());
+// watch([() => props.cards, width, height], (newValue) => {
+//   const [newCards, newWidth, newHeight] = newValue;
+//   if (newWidth === 0 || newHeight === 0) {
+//     return;
+//   }
+//   positioner.value.bounds = new Size(width.value, height.value);
+//   positioner.value.cards = newCards;
+// });
 
 /**
  * If mouse down but doesn't move, then it's a click, not a drag.  We can detect this
@@ -31,8 +45,9 @@ function handleMouseDown(event: MouseEvent, card: Card) {
 
   // if left click
   if (event.button === 0) {
-    const startPosition = { x: card.position.x, y: card.position.y };
-    const clickedAt = { x: event.clientX, y: event.clientY };
+    const startPosition = positioner.value.getPosition(card);
+    const clickedAt = new Point(event.clientX, event.clientY);
+    const offsetFromClick = startPosition.sub(clickedAt);
     // const clickedTime = Date.now();
 
     const moveHandler = (event: MouseEvent) => {
@@ -46,8 +61,8 @@ function handleMouseDown(event: MouseEvent, card: Card) {
       }
 
       if (dragState === TrackStates.DRAGGING) {
-        card.position.x = startPosition.x + event.clientX - clickedAt.x;
-        card.position.y = startPosition.y + event.clientY - clickedAt.y;
+        const newPosition = new Point(event.clientX, event.clientY);
+        positioner.value.moveCard(card, offsetFromClick.add(newPosition));
       }
     };
     const upHandler = (_event: MouseEvent) => {
@@ -77,9 +92,6 @@ function handleMouseClick(event: MouseEvent, card: Card) {
   }
 }
 
-const rootEl = ref(null);
-const { width, height } = useElementSize(rootEl);
-
 function cardPosition(cardIndex: number): PositioningInfo {
   const positions = calculateArcPositions(props.cards, new Size(width.value, height.value));
   return positions[cardIndex];
@@ -97,6 +109,17 @@ function cardPositionStyle(cardIndex: number) {
     transform: `rotate(${rotation.degrees}deg)`,
   };
 }
+// function cardPositionStyleWithFreePositioner(cardIndex: number) {
+//   const card = props.cards.cards[cardIndex];
+//   const cardHalfSize = card.size.halfsize();
+//   const center = positioner.value.getPosition(card);
+//   const topLeft = center.sub(cardHalfSize);
+
+//   return {
+//     left: `${(topLeft.x).toFixed(5)}px`,
+//     top: `${(topLeft.y).toFixed(5)}px`,
+//   };
+// }
 </script>
 
 <template>
