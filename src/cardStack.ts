@@ -6,8 +6,7 @@ interface CardIterator {
 }
 
 export class CardStack implements CardIterator {
-  constructor(public cards: Card[]) {
-  }
+  constructor(public cards: Card[]) {}
 
   [Symbol.iterator](): Iterator<Card> {
     let index = 0;
@@ -23,16 +22,25 @@ export class CardStack implements CardIterator {
     };
   }
 
-  // Similar to Array.prototype.forEach.
+  /**
+   * Similar to Array.prototype.forEach().
+   */
   forEach(callbackfn: (card: Card, index: number, array: Card[]) => void, thisArg?: CardStack): void {
     this.cards.forEach(callbackfn, thisArg);
+  }
+
+  /**
+   * Similar to Array.prototype.map().
+   */
+  map<T>(callbackfn: (card: Card, index: number, array: Card[]) => T, thisArg?: CardStack): T[] {
+    return this.cards.map(callbackfn, thisArg);
   }
 
   get length(): number {
     return this.cards.length;
   }
 
-  getCard(index: number): Card {
+  get(index: number): Card {
     return this.cards[index];
   }
 

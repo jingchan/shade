@@ -3,6 +3,9 @@ import { useElementSize } from '@vueuse/core';
 import { ref } from 'vue';
 import type { CardStack } from '../cardStack';
 import type { Card } from '../card';
+import type { PositioningInfo } from '../positioning';
+import { calculateArcPositions } from '../positioning';
+import { Angle, Size } from '../types';
 import CardView from './CardView.vue';
 
 const props = defineProps<{
@@ -76,66 +79,22 @@ function handleMouseClick(event: MouseEvent, card: Card) {
 
 const rootEl = ref(null);
 const { width, height } = useElementSize(rootEl);
-const standardCardWidth = 170;
-const standardCardHeight = 240;
-const maxCardAngle = 10 * Math.PI / 180;
-const cardAreaPadding = standardCardWidth * 0.8;
-const cardMaxDistance = standardCardWidth * 0.87;
 
-function cardPosition(cardIndex: number) {
-  if (cardIndex < 0 || cardIndex >= props.cards.length) {
-    throw new Error(`Card index out of bounds: ${cardIndex}`);
-  }
-  const numCards = props.cards.length;
-  if (numCards <= 1) {
-    return { x: width.value / 2, y: height.value / 2 };
-  }
-
-  // Radius of circle for card arc.
-  const r = (width.value - cardAreaPadding * 2) / 2 / Math.tan(maxCardAngle);
-  const maxCardAngleDelta = Math.atan2(cardMaxDistance, r);
-  // const maxCardAngleDelta = 5 * Math.PI / 180;
-  const cardAngleDelta = Math.min(maxCardAngleDelta, maxCardAngle * 2 / (numCards - 1));
-  const cardAngleRange = cardAngleDelta * (numCards - 1);
-  const cardAngleMin = -cardAngleRange / 2;
-  // const cardAngleMax = cardAngleRange / 2;
-
-  const theta = cardAngleMin + cardIndex * cardAngleDelta;
-  const xPositionAdjustment = standardCardHeight / 2 * Math.sin(theta) - standardCardWidth / 2;
-  const yPositionAdjustment = standardCardHeight / 2 * Math.cos(theta) - standardCardHeight / 2;
-  const cardTopMidX = width.value / 2 + r * Math.sin(theta);
-  // const cardTopMidY = height.value / 2 + r - r * Math.cos(theta);
-
-  const yMaxDisplacement = r - r * Math.cos(cardAngleMin);
-  const yDisplacementOffset = yMaxDisplacement / 2;
-  const cardTopMidY = height.value / 2 - standardCardHeight / 2 - yDisplacementOffset + r - r * Math.cos(theta);
-  const x = cardTopMidX + xPositionAdjustment;
-  const y = cardTopMidY + yPositionAdjustment;
-  // const x = cardTopMidX;
-  // const y = cardTopMidY;
-
-  // console.log('r', r, 'sinr', r * Math.sin(theta), 'cosr', r * Math.cos(theta));
-  // console.log('card', props.cards.cards[cardIndex].name, 'x', x, 'y', y, 'theta', theta);
-
-  // const cardSpacing = Math.min(standardCardWidth, width.value / numCards);
-  // const cardAreaWidth = spacing * numCards;
-  // const leftBound = (width.value - totalWidth) / 2;
-  // const rightBound = leftBound + totalWidth;
-
-  // const y = (height.value - standardCardHeight) / 2 + Y;
-  return {
-    x,
-    y,
-    angle: (theta * 180 / Math.PI).toFixed(5),
-  };
+function cardPosition(cardIndex: number): PositioningInfo {
+  const positions = calculateArcPositions(props.cards, new Size(width.value, height.value));
+  return positions[cardIndex];
 }
 
 function cardPositionStyle(cardIndex: number) {
-  const position = cardPosition(cardIndex);
+  const card = props.cards.cards[cardIndex];
+  const cardHalfSize = card.size.halfsize();
+  const { center, rotation = Angle.ZERO } = cardPosition(cardIndex);
+  const topLeft = center.sub(cardHalfSize);
+
   return {
-    left: `${(position.x).toFixed(5)}px`,
-    top: `${(position.y).toFixed(5)}px`,
-    transform: `rotate(${position.angle}deg)`,
+    left: `${(topLeft.x).toFixed(5)}px`,
+    top: `${(topLeft.y).toFixed(5)}px`,
+    transform: `rotate(${rotation.degrees}deg)`,
   };
 }
 </script>

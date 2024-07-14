@@ -1,5 +1,7 @@
 import { DEBUG_CARDS } from './debug';
-import type { Point } from './types';
+import { Point, Size } from './types';
+
+export const DEFAULT_CARD_SIZE = new Size(170, 240);
 
 export class CardDef {
   constructor(
@@ -8,6 +10,9 @@ export class CardDef {
     public type: string,
     public description: string,
     public image?: string,
+
+    // Deprecated
+    public position?: Point,
   ) {
   }
 }
@@ -27,10 +32,10 @@ export class Card {
 
   public active: boolean = false;
   public isFaceDown: boolean = false;
-  public position: Point = { x: 0, y: 0 };
 
   // public cardDef: CardDef,
-  // public position: Point,
+  public position: Point = new Point(0, 0);
+  public size: Size = DEFAULT_CARD_SIZE;
   // // Maybe state or status
   constructor(
     public config: CardConfig = {},
@@ -41,7 +46,6 @@ export class Card {
 
     this.draggable = config.draggable ?? false;
     this.custom_color = config.custom_color;
-    this.position = config.position ?? this.position;
   }
 
   static random(): Card {
