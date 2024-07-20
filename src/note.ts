@@ -30,9 +30,9 @@ export class Note {
    * A0, B0, then C1, D1, etc.
    */
   get value() {
-    const nameValue
-      = ((this.pitch.toUpperCase().charCodeAt(0) - 'A'.charCodeAt(0)) + 5) % 7;
-    return nameValue + (this.octave) * 7 - 5;
+    const nameValue =
+      (this.pitch.toUpperCase().charCodeAt(0) - 'A'.charCodeAt(0) + 5) % 7;
+    return nameValue + this.octave * 7 - 5;
   }
 
   /**
@@ -137,6 +137,6 @@ export class Score {
    * Resets all note colors.
    */
   resetNotes() {
-    this.notes.forEach(note => (note.custom_color = undefined));
+    this.notes.forEach((note) => (note.custom_color = undefined));
   }
 }

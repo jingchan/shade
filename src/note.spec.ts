@@ -15,11 +15,11 @@ describe('note', () => {
   });
 
   it('should create A0 from value 0.', () => {
-    expect((new Note('A', 0)).value).toBe(0);
-    expect((new Note('B', 0)).value).toBe(1);
-    expect((new Note('C', 1)).value).toBe(2);
-    expect((new Note('C', 4)).value).toBe(23);
-    expect((new Note('C', 5)).value).toBe(30);
+    expect(new Note('A', 0).value).toBe(0);
+    expect(new Note('B', 0).value).toBe(1);
+    expect(new Note('C', 1).value).toBe(2);
+    expect(new Note('C', 4).value).toBe(23);
+    expect(new Note('C', 5).value).toBe(30);
   });
 
   it('should create notes from values 0.', () => {
@@ -31,10 +31,10 @@ describe('note', () => {
   });
 
   it('should create same values using constructor and fromString.', () => {
-    expect((new Note('A', 0)).value).toBe(Note.fromString('A0').value);
-    expect((new Note('B', 0)).value).toBe(Note.fromString('B0').value);
-    expect((new Note('C', 1)).value).toBe(Note.fromString('C1').value);
-    expect((new Note('C', 4)).value).toBe(Note.fromString('C4').value);
-    expect((new Note('C', 5)).value).toBe(Note.fromString('C5').value);
+    expect(new Note('A', 0).value).toBe(Note.fromString('A0').value);
+    expect(new Note('B', 0).value).toBe(Note.fromString('B0').value);
+    expect(new Note('C', 1).value).toBe(Note.fromString('C1').value);
+    expect(new Note('C', 4).value).toBe(Note.fromString('C4').value);
+    expect(new Note('C', 5).value).toBe(Note.fromString('C5').value);
   });
 });

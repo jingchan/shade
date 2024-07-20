@@ -25,13 +25,19 @@ interface ArcPositioningConfig {
    * Maximum distance between cards with abundant space.
    */
   maxStepWidth?: number;
+
+  extraWidth?: number;
+  rotationDampening?: number;
 }
 
 const DEFAULT_ARC_POSITIONING_CONFIG = {
   cardSize: DEFAULT_CARD_SIZE,
-  maxRotationRadians: 10 * Math.PI / 180,
+  maxRotationRadians: (15 * Math.PI) / 180,
   sidePaddingFactor: 0.8,
   maxStepWidthFactor: 0.87,
+  extraWidthFactor: 0.27,
+  rotationDampening: 0.7,
+  heightDampening: 0.3,
 };
 
 export function calculateArcPositions(
@@ -44,6 +50,8 @@ export function calculateArcPositions(
     maxRotationRadians,
     sidePaddingFactor,
     maxStepWidthFactor,
+    rotationDampening,
+    heightDampening,
   } = { ...DEFAULT_ARC_POSITIONING_CONFIG, ...config };
   const numCards = cards.length;
   if (numCards <= 0) {
@@ -55,22 +63,36 @@ export function calculateArcPositions(
 
   const usableWidth = bounds.width - cardSize.width * sidePaddingFactor * 2;
   const radius = usableWidth / 2 / Math.tan(maxRotationRadians);
-  const maxStepRadians = Math.atan2(cardSize.width * maxStepWidthFactor, radius);
+  const maxStepRadians = Math.atan2(
+    cardSize.width * maxStepWidthFactor,
+    radius,
+  );
 
-  const stepRadians = Math.min(maxStepRadians, maxRotationRadians * 2 / (numCards - 1));
+  const stepRadians = Math.min(
+    maxStepRadians,
+    (maxRotationRadians * 2) / (numCards - 1),
+  );
   const cardAngleRange = stepRadians * (numCards - 1);
   const cardAngleStart = -cardAngleRange / 2;
 
   // Add half the maximal height displacement to recenter the cards.
-  const displacementOffset = new Point(0, -(radius - radius * Math.cos(maxRotationRadians)) / 2);
-  const origin = bounds.center().add(displacementOffset);
+  const yDisplacementOffset =
+    (radius - radius * Math.cos(maxRotationRadians)) / 2;
+  const origin = bounds.center().add(new Point(0, -yDisplacementOffset));
 
   return cards.map((_card, index) => {
     const rotation = new Angle(cardAngleStart + index * stepRadians);
-    const center = origin.add(new Point(radius * rotation.sin(), radius - radius * rotation.cos()));
+    const center = origin.add(
+      new Point(
+        radius * rotation.sin(),
+        (radius - radius * rotation.cos()) * (1.0 - heightDampening),
+      ),
+    );
+
+    const dampenedRotation = rotation.multiply(1.0 - rotationDampening);
     return {
       center,
-      rotation,
+      rotation: dampenedRotation,
     };
   });
 }

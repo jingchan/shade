@@ -6,5 +6,4 @@ import MainPage from './components/MainPage.vue';
   <MainPage />
 </template>
 
-<style scoped>
-</style>
+<style scoped></style>

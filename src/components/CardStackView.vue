@@ -11,8 +11,9 @@ import CardView from './CardView.vue';
 
 const props = defineProps<{
   cards: CardStack;
+  bgColor?: string;
 }>();
-const rootEl = ref(null);
+const rootEl = ref<HTMLElement>();
 const { width, height } = useElementSize(rootEl);
 
 const DRAG_THRESHOLD_RADIUS = 5;
@@ -21,7 +22,7 @@ const DRAG_THRESHOLD_RADIUS = 5;
 enum TrackStates {
   NONE,
   DRAGGING,
-};
+}
 
 // Free Positioning example usage.
 const positioner = ref(new FreePositioning());
@@ -52,7 +53,12 @@ function handleMouseDown(event: MouseEvent, card: Card) {
 
     const moveHandler = (event: MouseEvent) => {
       if (dragState === TrackStates.NONE) {
-        if (Math.sqrt((event.clientX - clickedAt.x) ** 2 + (event.clientY - clickedAt.y) ** 2) > DRAG_THRESHOLD_RADIUS) {
+        if (
+          Math.sqrt(
+            (event.clientX - clickedAt.x) ** 2 +
+              (event.clientY - clickedAt.y) ** 2,
+          ) > DRAG_THRESHOLD_RADIUS
+        ) {
           dragState = TrackStates.DRAGGING;
         }
         // else if (Date.now() - clickedTime > DRAG_THRESHOLD_DELAY_MS) {
@@ -79,10 +85,9 @@ function handleMouseDown(event: MouseEvent, card: Card) {
 }
 
 function handleMouseClick(event: MouseEvent, card: Card) {
-  // console.log('handleMouseClick', event, card);
-  // If left click
   if (event.button === 0) {
     props.cards.deselectAllCards();
+
     // To restart any active CSS animations, we have to ensure that the class is
     // removed before adding the class that triggers the activation animation.
     setTimeout(() => {
@@ -93,7 +98,10 @@ function handleMouseClick(event: MouseEvent, card: Card) {
 }
 
 function cardPosition(cardIndex: number): PositioningInfo {
-  const positions = calculateArcPositions(props.cards, new Size(width.value, height.value));
+  const positions = calculateArcPositions(
+    props.cards,
+    new Size(width.value, height.value),
+  );
   return positions[cardIndex];
 }
 
@@ -104,11 +112,13 @@ function cardPositionStyle(cardIndex: number) {
   const topLeft = center.sub(cardHalfSize);
 
   return {
-    left: `${(topLeft.x).toFixed(5)}px`,
-    top: `${(topLeft.y).toFixed(5)}px`,
+    left: `${topLeft.x.toFixed(5)}px`,
+    top: `${topLeft.y.toFixed(5)}px`,
     transform: `rotate(${rotation.degrees}deg)`,
   };
 }
+
+// Unused for now.
 // function cardPositionStyleWithFreePositioner(cardIndex: number) {
 //   const card = props.cards.cards[cardIndex];
 //   const cardHalfSize = card.size.halfsize();
@@ -116,8 +126,8 @@ function cardPositionStyle(cardIndex: number) {
 //   const topLeft = center.sub(cardHalfSize);
 
 //   return {
-//     left: `${(topLeft.x).toFixed(5)}px`,
-//     top: `${(topLeft.y).toFixed(5)}px`,
+//     left: `${topLeft.x.toFixed(5)}px`,
+//     top: `${topLeft.y.toFixed(5)}px`,
 //   };
 // }
 </script>
@@ -136,6 +146,7 @@ function cardPositionStyle(cardIndex: number) {
       :name="card.name"
       :type="card.type"
       :description="card.description"
+      :image="card.image"
       :active="card.active"
       :is-face-down="card.isFaceDown"
       :style="{
@@ -151,10 +162,9 @@ function cardPositionStyle(cardIndex: number) {
 
 <style scoped>
 .stack-container {
-  background-color: red;
+  background-color: v-bind(bgColor);
   margin: auto;
-  width: 50%;
-  height : 300px;
+  height: 300px;
   position: relative;
 }
 </style>

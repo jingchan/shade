@@ -6,8 +6,7 @@ export class Vec2 {
     if (typeof x === 'object') {
       this.x = x.x;
       this.y = x.y;
-    }
-    else {
+    } else {
       this.x = x;
       this.y = y;
     }
@@ -30,8 +29,7 @@ export class Vec2 {
   }
 }
 
-export class Point extends Vec2 {
-};
+export class Point extends Vec2 {}
 export class Size extends Vec2 {
   get width(): number {
     return this.x;
@@ -49,21 +47,28 @@ export class Size extends Vec2 {
     return new Size(this.x / 2, this.y / 2);
   }
 
+  as_array(include_z: boolean = false): number[] {
+    return include_z ? [this.x, this.y, 1.0] : [this.x, this.y];
+  }
+
   static fromElementBounds(el: HTMLElement): Size {
     return new Size(el.clientWidth, el.clientHeight);
   }
 
   static fromRadiusAngle(radius: number, angle: Angle): Size {
-    return new Size(radius * Math.cos(angle), radius * Math.sin(angle));
+    return new Size(radius * angle.cos(), radius * angle.sin());
   }
-};
+}
 
 export class Angle {
-  constructor(public radians: number) {
-  }
+  constructor(public radians: number) {}
 
   get degrees(): number {
-    return this.radians * 180 / Math.PI;
+    return (this.radians * 180) / Math.PI;
+  }
+
+  multiply(factor: number): Angle {
+    return new Angle(this.radians * factor);
   }
 
   sin(): number {
@@ -75,7 +80,7 @@ export class Angle {
   }
 
   static fromDegrees(degrees: number): Angle {
-    return new Angle(degrees * Math.PI / 180);
+    return new Angle((degrees * Math.PI) / 180);
   }
 
   static ZERO = new Angle(0);

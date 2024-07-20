@@ -16,8 +16,7 @@ export class CardStack implements CardIterator {
       next: (): IteratorResult<Card, undefined> => {
         if (index < this.cards.length) {
           return { value: this.cards[index++], done: false };
-        }
-        else {
+        } else {
           return { done: true } as IteratorReturnResult<undefined>;
         }
       },
@@ -27,14 +26,20 @@ export class CardStack implements CardIterator {
   /**
    * Similar to Array.prototype.forEach().
    */
-  forEach(callbackfn: (card: Card, index: number, array: Card[]) => void, thisArg?: CardStack): void {
+  forEach(
+    callbackfn: (card: Card, index: number, array: Card[]) => void,
+    thisArg?: CardStack,
+  ): void {
     this.cards.forEach(callbackfn, thisArg);
   }
 
   /**
    * Similar to Array.prototype.map().
    */
-  map<T>(callbackfn: (card: Card, index: number, array: Card[]) => T, thisArg?: CardStack): T[] {
+  map<T>(
+    callbackfn: (card: Card, index: number, array: Card[]) => T,
+    thisArg?: CardStack,
+  ): T[] {
     return this.cards.map(callbackfn, thisArg);
   }
 
@@ -49,8 +54,7 @@ export class CardStack implements CardIterator {
   addCard(card: Card, index?: number): void {
     if (index) {
       this.cards.splice(index, 0, card);
-    }
-    else {
+    } else {
       this.cards.push(card);
     }
   }
@@ -58,15 +62,22 @@ export class CardStack implements CardIterator {
   /**
    * Removes card from stack and returns it.
    */
-  popCard(card: Card): Card {
-    const cardIndex = this.cards.indexOf(card);
+  popCard(card: Card | number): Card {
+    let cardIndex: number;
+    if (typeof card === 'number') {
+      cardIndex = card;
+    } else {
+      cardIndex = this.cards.indexOf(card);
+    }
+
     if (cardIndex > -1) {
       return this.cards.splice(cardIndex, 1).at(0) as Card;
-    }
-    else {
+    } else {
       throw new Error('Card not found in CardStack.');
     }
   }
+
+  removeCard = this.popCard;
 
   moveCard(card: Card, index: number): void {
     const movedCard = this.popCard(card);
@@ -74,7 +85,7 @@ export class CardStack implements CardIterator {
   }
 
   deselectAllCards(): void {
-    this.forEach(card => card.active = false);
+    this.forEach((card) => (card.active = false));
   }
 
   selectCard(card: Card): void {
