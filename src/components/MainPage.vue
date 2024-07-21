@@ -4,11 +4,15 @@ import { onMounted, ref } from 'vue';
 import { CardStack } from '../cardStack.ts';
 import { Card } from '../card.ts';
 import CardStackView from './CardStackView.vue';
-import Canvas from './Canvas.vue';
+import CanvasView from './CanvasView.vue';
 import { TriangleRenderer } from '../render/triangle.ts';
 import { CubeRenderer } from '../render/cube.ts';
 import { ScreenRenderer } from '../render/screen.ts';
 import { TextureRenderer } from '../render/texture.ts';
+import { BaseRenderer } from '../render/base';
+import checkerShader from '../shaders/checker.wgsl';
+import baseShader from '../shaders/base.wgsl';
+import { Shader } from '../shader.ts';
 
 // const cards = ref(CardStack.example());
 const cards = ref(new CardStack([]));
@@ -31,15 +35,33 @@ const textureImage = new URL('../assets/Placeholder.png', import.meta.url).href;
   <div class="main">
     Hello
     <div class="canvases">
-      <Canvas :renderer="ScreenRenderer" class="demo-canvas" />
-      <Canvas :renderer="TriangleRenderer" class="demo-canvas" />
-      <Canvas :renderer="CubeRenderer" class="demo-canvas" />
-      <Canvas
+      <CanvasView :renderer="ScreenRenderer" class="demo-canvas" />
+      <CanvasView :renderer="TriangleRenderer" class="demo-canvas" />
+      <CanvasView :renderer="CubeRenderer" class="demo-canvas" />
+      <CanvasView
         :renderer="TextureRenderer"
-        :image="textureImage"
+        :options="{ image: textureImage }"
         class="demo-canvas"
       />
-      <!-- <Canvas
+      <CanvasView
+        :renderer="BaseRenderer"
+        :options="{
+          vertexShader: checkerShader,
+          fragmentShader: checkerShader,
+        }"
+        class="demo-canvas"
+      />
+      <CanvasView :renderer="BaseRenderer" :options="{}" class="demo-canvas" />
+      <CanvasView
+        :renderer="BaseRenderer"
+        :options="{
+          vertexShader: new Shader(baseShader),
+          fragmentShader: new Shader(baseShader),
+          color: [1.0, 0.0, 1.0, 0.5],
+        }"
+        class="demo-canvas"
+      />
+      <!-- <CanvasView
         :renderer="AreaRenderer"
         :image="textureImage"
         class="demo-canvas"
@@ -75,12 +97,6 @@ const textureImage = new URL('../assets/Placeholder.png', import.meta.url).href;
   cursor: pointer;
 }
 
-.demo-canvas {
-  width: 400px;
-  height: 300px;
-  background-color: #ddd;
-}
-
 /* .card {
   background-color: rgba(130, 200, 180, 0.8);
   @apply no-selection;
@@ -111,5 +127,11 @@ const textureImage = new URL('../assets/Placeholder.png', import.meta.url).href;
   gap: 20px;
   margin-left: 20px;
   margin-right: 20px;
+}
+
+.demo-canvas {
+  width: 500px;
+  height: 400px;
+  background-color: #ddd;
 }
 </style>

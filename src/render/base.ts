@@ -1,172 +1,165 @@
-// /**
-//  * Base Renderer class.
-//  */
+/**
+ * Base Renderer class.
+ */
 
-// import screenVertWGSL from '../shaders/screen.wgsl';
-// import { RendererContext, Renderer } from './renderer';
-// import { RenderTarget } from './rendertarget';
+import { Shader, ShaderType } from '../shader';
+import type { Renderer } from './renderer';
+import { RendererContext } from './renderer';
+import { RenderTarget } from './rendertarget';
 
-// const NUM_VERTICES = 4;
-// const WAVE_PERIOD = 3000;
+const NUM_VERTICES = 4;
 
-// export class BaseRenderer {
-//   private pipeline: GPURenderPipeline;
-//   private uniformBuffer: GPUBuffer;
-//   private uniformBindGroup: GPUBindGroup;
+const DEFAULT_VERTEX_SHADER = Shader.default();
+const DEFAULT_FRAGMENT_SHADER = Shader.default();
+const DEFAULT_COLOR = [0.0, 0.4, 0.7, 0.4];
 
-//   constructor(private renderContext: RendererContext) {
-//     const pipeline = _createPipeline(this.renderContext);
-//     const { uniformBuffer, uniformBindGroup } = _setupUniforms(
-//       renderContext.device,
-//       pipeline,
-//     );
+export type ColorType = [number, number, number, number];
+export interface BaseRendererOptions {
+  image?: string;
+  vertexShader?: ShaderType;
+  fragmentShader?: ShaderType;
+  texture?: GPUTexture;
+  color?: ColorType;
+}
 
-//     this.pipeline = pipeline;
-//     this.uniformBuffer = uniformBuffer;
-//     this.uniformBindGroup = uniformBindGroup;
-//   }
+export class BaseRenderer implements Renderer {
+  private pipeline: GPURenderPipeline;
+  private uniformBuffer: GPUBuffer;
+  private uniformBindGroup: GPUBindGroup;
 
-//   update(time: number) {
-//     _updateUniforms(this.renderContext.device, this.uniformBuffer, time);
-//   }
+  constructor(
+    private renderContext: RendererContext,
+    private options: BaseRendererOptions = {},
+  ) {
+    options = {
+      vertexShader: DEFAULT_VERTEX_SHADER,
+      fragmentShader: DEFAULT_FRAGMENT_SHADER,
+      ...options,
+    };
+    this.pipeline = this._initPipeline(options);
+    const { uniformBuffer, uniformBindGroup } = this._initUniforms();
 
-//   renderFrame(target: RenderTarget) {
-//     _sendCommands(
-//       this.renderContext.device,
-//       this.pipeline,
-//       target.colorTextureView,
-//       this.uniformBindGroup!,
-//     );
-//   }
-// }
+    this.uniformBuffer = uniformBuffer;
+    this.uniformBindGroup = uniformBindGroup;
+  }
 
-// function _createPipeline(renderContext: RendererContext) {
-//   const { device, presentationFormat } = renderContext;
+  update(time: number, target: RenderTarget) {
+    this._updateUniforms(time, target);
+  }
 
-//   const pipeline = device.createRenderPipeline({
-//     label: 'screen-pipeline',
-//     layout: 'auto',
-//     vertex: {
-//       module: device.createShaderModule({
-//         code: screenVertWGSL,
-//       }),
-//     },
-//     fragment: {
-//       module: device.createShaderModule({
-//         code: screenVertWGSL,
-//       }),
-//       targets: [
-//         {
-//           format: presentationFormat,
-//         },
-//       ],
-//     },
-//     primitive: {
-//       topology: 'triangle-list',
-//       cullMode: 'back',
-//     },
-//   });
+  renderFrame(target: RenderTarget) {
+    this._sendCommands(target.colorTextureView);
+  }
 
-//   return pipeline;
-// }
+  _initPipeline(options: BaseRendererOptions) {
+    const { device, presentationFormat } = this.renderContext;
 
-// function _setupUniforms(device: GPUDevice, pipeline: GPURenderPipeline) {
-//   const uniformBufferSize = 4 * 4 * 3; // Colors
-//   const uniformBuffer = device.createBuffer({
-//     size: uniformBufferSize,
-//     usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-//   });
+    function getShaderSource(shader: ShaderType) {
+      if (typeof shader === 'string') {
+        return shader;
+      }
+      return shader.source;
+    }
+    const pipeline = device.createRenderPipeline({
+      label: 'screen-pipeline',
+      layout: 'auto',
+      vertex: {
+        module: device.createShaderModule({
+          code: getShaderSource(options.vertexShader),
+        }),
+      },
+      fragment: {
+        module: device.createShaderModule({
+          code: getShaderSource(options.fragmentShader),
+        }),
+        targets: [
+          {
+            format: presentationFormat,
+          },
+        ],
+      },
+      primitive: {
+        topology: 'triangle-strip' as GPUPrimitiveTopology,
+        cullMode: 'back' as GPUCullMode,
+      },
+    });
 
-//   const uniformBindGroup = device.createBindGroup({
-//     label: 'uniform-bindgroup',
-//     layout: pipeline.getBindGroupLayout(0),
-//     entries: [
-//       {
-//         binding: 0,
-//         resource: {
-//           buffer: uniformBuffer,
-//         },
-//       },
-//     ],
-//   });
+    return pipeline;
+  }
 
-//   return {
-//     uniformBuffer,
-//     uniformBindGroup,
-//   };
-// }
+  /**
+   * Sets up uniforms for the renderer.
+   */
+  _initUniforms() {
+    const { device } = this.renderContext;
+    const uniformBufferSize = 4 * (4 + 4); // Width, Height, Time, Color
+    const uniformBuffer = device.createBuffer({
+      size: uniformBufferSize,
+      usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+    });
 
-// function _setupGlobalUniforms(device: GPUDevice, pipeline: GPURenderPipeline) { {
-//   const uniformBufferSize = 4 * 3; // Width, Height, Scale
-//   const uniformBuffer = device.createBuffer({
-//     size: uniformBufferSize,
-//     usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-//   });
+    const uniformBindGroup = device.createBindGroup({
+      label: 'uniform-bindgroup',
+      layout: this.pipeline.getBindGroupLayout(0),
+      entries: [
+        {
+          binding: 0,
+          resource: {
+            buffer: uniformBuffer,
+          },
+        },
+      ],
+    });
 
-//   const uniformBindGroup = device.createBindGroup({
-//     label: 'uniform-bindgroup',
-//     layout: pipeline.getBindGroupLayout(1),
-//     entries: [
-//       {
-//         binding: 0,
-//         resource: {
-//           buffer: uniformBuffer,
-//         },
-//       },
-//     ],
-//   });
+    return {
+      uniformBuffer,
+      uniformBindGroup,
+    };
+  }
 
-//   return {
-//     uniformBuffer,
-//     uniformBindGroup,
-//   };
+  _updateUniforms(time: number, target: RenderTarget) {
+    const { device } = this.renderContext;
+    const width = target.renderSize.width;
+    const height = target.renderSize.height;
+    const color = this.options.color || DEFAULT_COLOR;
 
-// }
+    // prettier-ignore
+    const uniforms = new Float32Array([
+      width, height, time, 0.0,
+      color[0], color[1], color[2], color[3],
+    ]);
 
-// function _updateUniforms(
-//   device: GPUDevice,
-//   uniformBuffer: GPUBuffer,
-//   time: number,
-// ) {
-//   const wave = Math.sin((time / WAVE_PERIOD) * 2 * Math.PI) * 0.5 + 0.5;
+    device.queue.writeBuffer(
+      this.uniformBuffer,
+      0,
+      uniforms.buffer,
+      uniforms.byteOffset,
+      uniforms.byteLength,
+    );
+  }
 
-//   // prettier-ignore
-//   const colors = new Float32Array([
-//     0.0, 0.0, 1.0, 0.8*wave, // red
-//   ]);
+  _sendCommands(dstView: GPUTextureView) {
+    const { device } = this.renderContext;
+    const renderPassDescriptor: GPURenderPassDescriptor = {
+      colorAttachments: [
+        {
+          view: dstView,
 
-//   device.queue.writeBuffer(
-//     uniformBuffer,
-//     0,
-//     colors.buffer,
-//     colors.byteOffset,
-//     colors.byteLength,
-//   );
-// }
+          clearValue: [0.5, 0.5, 0.5, 1.0],
+          loadOp: 'clear',
+          storeOp: 'store',
+        },
+      ],
+    };
 
-// function _sendCommands(
-//   device: GPUDevice,
-//   pipeline: GPURenderPipeline,
-//   dstView: GPUTextureView,
-//   uniformBindGroup: GPUBindGroup,
-// ) {
-//   const renderPassDescriptor: GPURenderPassDescriptor = {
-//     colorAttachments: [
-//       {
-//         view: dstView,
-
-//         clearValue: [0.5, 0.5, 0.5, 1.0],
-//         loadOp: 'clear',
-//         storeOp: 'store',
-//       },
-//     ],
-//   };
-
-//   const commandEncoder = device.createCommandEncoder();
-//   const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
-//   passEncoder.setPipeline(pipeline);
-//   passEncoder.setBindGroup(0, uniformBindGroup);
-//   passEncoder.draw(NUM_VERTICES);
-//   passEncoder.end();
-//   device.queue.submit([commandEncoder.finish()]);
-// }
+    const commandEncoder = this.renderContext.device.createCommandEncoder({
+      label: 'base',
+    });
+    const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
+    passEncoder.setPipeline(this.pipeline);
+    passEncoder.setBindGroup(0, this.uniformBindGroup);
+    passEncoder.draw(NUM_VERTICES);
+    passEncoder.end();
+    device.queue.submit([commandEncoder.finish()]);
+  }
+}

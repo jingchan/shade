@@ -1,6 +1,12 @@
 ##### P1
 
 - [ ] Action model.
+- [ ] Perlin noise.
+- [ ] Varanoi noise.
+- [ ] Fire effect.
+- [ ] Circle on fire.
+- [ ] Sliders.
+- [ ] Demo name/card.
 
 ##### P3
 

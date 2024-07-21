@@ -1,7 +1,9 @@
 /**
  * Renders a texture to a quad.
  */
-import screenVertWGSL from '../shaders/texture.wgsl';
+import { Shader } from '../shader';
+import TextureWsgl from '../shaders/texture.wgsl';
+import { BaseRendererOptions } from './base';
 import {
   testPositionOffset,
   testUvOffset,
@@ -20,18 +22,24 @@ export class TextureRenderer implements Renderer {
   private numVertices: number;
   private uniformBuffer: GPUBuffer;
   private uniformBindGroup: GPUBindGroup;
+  private texture: GPUTexture;
 
   constructor(
     private renderContext: RendererContext,
-    private texture: GPUTexture,
+    options: BaseRendererOptions = {},
   ) {
+    if (!options.texture) {
+      throw new Error('TextureRenderer requires a texture');
+    }
+    this.texture = options.texture;
+
     const {
       pipeline,
       vertexBuffer,
       numVertices,
       uniformBuffer,
       uniformBindGroup,
-    } = _createPipeline(this.renderContext, texture);
+    } = this._createPipeline();
     this.pipeline = pipeline;
     this.vertexBuffer = vertexBuffer;
     this.numVertices = numVertices;
@@ -49,113 +57,110 @@ export class TextureRenderer implements Renderer {
       this.pipeline,
       target.colorTextureView,
       target.depthTextureView,
-      this.texture.createView(),
       this.vertexBuffer,
       this.numVertices,
       this.uniformBindGroup!,
     );
   }
-}
 
-function _createPipeline(renderContext: RendererContext, texture: GPUTexture) {
-  const { device, presentationFormat } = renderContext;
+  _createPipeline() {
+    const { device, presentationFormat } = this.renderContext;
 
-  const pipeline = device.createRenderPipeline({
-    label: 'texture-pipeline',
-    layout: 'auto',
-    vertex: {
-      module: device.createShaderModule({
-        code: screenVertWGSL,
-      }),
-      buffers: [
+    const pipeline = device.createRenderPipeline({
+      label: 'texture-pipeline',
+      layout: 'auto',
+      vertex: {
+        module: device.createShaderModule({
+          code: new Shader(TextureWsgl).source,
+        }),
+        buffers: [
+          {
+            arrayStride: testVertexSize,
+            attributes: [
+              {
+                shaderLocation: 0,
+                format: 'float32x4',
+                offset: testPositionOffset,
+              },
+              {
+                shaderLocation: 1,
+                format: 'float32x2',
+                offset: testUvOffset,
+              },
+            ],
+          } as GPUVertexBufferLayout,
+        ],
+      } as GPUVertexState,
+      fragment: {
+        module: device.createShaderModule({
+          code: new Shader(TextureWsgl).source,
+        }),
+        targets: [
+          {
+            format: presentationFormat,
+          },
+        ],
+      },
+      primitive: {
+        topology: 'triangle-list',
+        cullMode: 'back',
+      },
+      depthStencil: {
+        format: 'depth24plus',
+        depthWriteEnabled: true,
+        depthCompare: 'less',
+      },
+    });
+
+    const numVertices = testVertexCount;
+    const vertexBufferSize = testVertexSize * numVertices;
+    const vertexBuffer = device.createBuffer({
+      size: vertexBufferSize,
+      usage: GPUBufferUsage.VERTEX,
+      mappedAtCreation: true,
+    });
+    new Float32Array(vertexBuffer.getMappedRange()).set(testVertexArray);
+    vertexBuffer.unmap();
+
+    const uniformBufferSize = 4 * 3 * 4 + 4 * 4; // Mat + Color
+    const uniformBuffer = device.createBuffer({
+      size: uniformBufferSize,
+      usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+    });
+
+    const sampler = device.createSampler({
+      magFilter: 'linear',
+      minFilter: 'linear',
+    });
+
+    const uniformBindGroup = device.createBindGroup({
+      layout: pipeline.getBindGroupLayout(0),
+      entries: [
         {
-          arrayStride: testVertexSize,
-          attributes: [
-            {
-              shaderLocation: 0,
-              format: 'float32x4',
-              offset: testPositionOffset,
-            },
-            {
-              shaderLocation: 1,
-              format: 'float32x2',
-              offset: testUvOffset,
-            },
-          ],
-        } as GPUVertexBufferLayout,
-      ],
-    } as GPUVertexState,
-    fragment: {
-      module: device.createShaderModule({
-        code: screenVertWGSL,
-      }),
-      targets: [
+          binding: 0,
+          resource: {
+            buffer: uniformBuffer,
+          },
+        },
         {
-          format: presentationFormat,
+          binding: 1,
+          resource: this.texture.createView(),
+        },
+        {
+          binding: 2,
+          resource: sampler,
         },
       ],
-    },
-    primitive: {
-      topology: 'triangle-list',
-      cullMode: 'back',
-    },
-    depthStencil: {
-      format: 'depth24plus',
-      depthWriteEnabled: true,
-      depthCompare: 'less',
-    },
-  });
+    });
 
-  const numVertices = testVertexCount;
-  const vertexBufferSize = testVertexSize * numVertices;
-  const vertexBuffer = device.createBuffer({
-    size: vertexBufferSize,
-    usage: GPUBufferUsage.VERTEX,
-    mappedAtCreation: true,
-  });
-  new Float32Array(vertexBuffer.getMappedRange()).set(testVertexArray);
-  vertexBuffer.unmap();
-
-  const uniformBufferSize = 4 * 3 * 4 + 4 * 4; // Mat + Color
-  const uniformBuffer = device.createBuffer({
-    size: uniformBufferSize,
-    usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-  });
-
-  const sampler = device.createSampler({
-    magFilter: 'linear',
-    minFilter: 'linear',
-  });
-
-  console.log('texture', texture);
-
-  const uniformBindGroup = device.createBindGroup({
-    layout: pipeline.getBindGroupLayout(0),
-    entries: [
-      {
-        binding: 0,
-        resource: {
-          buffer: uniformBuffer,
-        },
-      },
-      {
-        binding: 1,
-        resource: texture.createView(),
-      },
-      {
-        binding: 2,
-        resource: sampler,
-      },
-    ],
-  });
-
-  return {
-    pipeline,
-    vertexBuffer,
-    numVertices,
-    uniformBuffer,
-    uniformBindGroup,
-  };
+    return {
+      pipeline,
+      vertexBuffer,
+      numVertices,
+      uniformBuffer,
+      uniformBindGroup,
+    };
+  }
 }
 
 function _updateUniforms(
@@ -192,8 +197,7 @@ function _sendCommands(
   device: GPUDevice,
   pipeline: GPURenderPipeline,
   dstView: GPUTextureView,
-  depthView: GPUTextureView,
-  textureView: GPUTextureView,
+  depthView: GPUTextureView | undefined,
   vertexBuffer: GPUBuffer,
   numVertices: number,
   uniformBindGroup: GPUBindGroup,
@@ -207,16 +211,20 @@ function _sendCommands(
         storeOp: 'store',
       },
     ],
-    depthStencilAttachment: {
-      view: depthView,
+  };
 
+  if (depthView) {
+    renderPassDescriptor.depthStencilAttachment = {
+      view: depthView,
       depthClearValue: 1.0,
       depthLoadOp: 'clear',
       depthStoreOp: 'store',
-    },
-  };
+    };
+  }
 
-  const commandEncoder = device.createCommandEncoder();
+  const commandEncoder = device.createCommandEncoder({
+    label: 'texture',
+  });
   const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
   passEncoder.setPipeline(pipeline);
   passEncoder.setBindGroup(0, uniformBindGroup);

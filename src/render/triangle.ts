@@ -17,11 +17,11 @@ export class TriangleRenderer implements Renderer {
     this.uniformBindGroup = uniformBindGroup;
   }
 
-  update(time: number) {
+  update(time: number, target: RenderTarget) {
     _updateUniforms(
       this.renderContext.device,
       this.uniformBuffer,
-      this.renderContext.renderSize,
+      target.renderSize,
       time,
     );
   }

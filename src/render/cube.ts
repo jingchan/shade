@@ -18,32 +18,22 @@ export class CubeRenderer implements Renderer {
   private pipeline: GPURenderPipeline;
   private vertexBuffer: GPUBuffer;
   private uniformBuffer: GPUBuffer;
-  private depthTexture: GPUTexture;
-  private depthTextureView: GPUTextureView;
   private uniformBindGroup: GPUBindGroup;
 
   constructor(private renderContext: RendererContext) {
-    const {
-      pipeline,
-      vertexBuffer,
-      uniformBuffer,
-      depthTexture,
-      depthTextureView,
-      uniformBindGroup,
-    } = _createPipeline(this.renderContext);
+    const { pipeline, vertexBuffer, uniformBuffer, uniformBindGroup } =
+      _createPipeline(this.renderContext);
     this.pipeline = pipeline;
     this.vertexBuffer = vertexBuffer;
     this.uniformBuffer = uniformBuffer;
-    this.depthTexture = depthTexture;
-    this.depthTextureView = depthTextureView;
     this.uniformBindGroup = uniformBindGroup;
   }
 
-  update(time: number) {
+  update(time: number, target: RenderTarget) {
     _updateUniforms(
       this.renderContext.device,
       this.uniformBuffer,
-      this.renderContext.renderSize,
+      target.renderSize,
       time,
     );
   }
@@ -61,7 +51,7 @@ export class CubeRenderer implements Renderer {
 }
 
 function _createPipeline(renderContext: RendererContext) {
-  const { device, renderSize, presentationFormat } = renderContext;
+  const { device, presentationFormat } = renderContext;
 
   const pipeline = device.createRenderPipeline({
     layout: 'auto',
@@ -110,13 +100,6 @@ function _createPipeline(renderContext: RendererContext) {
     },
   });
 
-  const depthTexture = device.createTexture({
-    size: [renderSize.width, renderSize.height],
-    format: 'depth24plus',
-    usage: GPUTextureUsage.RENDER_ATTACHMENT,
-  });
-  const depthTextureView = depthTexture.createView();
-
   // Create a vertex buffer from the cube data.
   const vertexBuffer = device.createBuffer({
     size: cubeVertexArray.byteLength,
@@ -148,8 +131,6 @@ function _createPipeline(renderContext: RendererContext) {
     pipeline,
     vertexBuffer,
     uniformBuffer,
-    depthTexture,
-    depthTextureView,
     uniformBindGroup,
   };
 }
@@ -200,7 +181,7 @@ function _sendCommands(
   device: GPUDevice,
   pipeline: GPURenderPipeline,
   dstView: GPUTextureView,
-  depthView: GPUTextureView,
+  depthView: GPUTextureView | undefined,
   uniformBindGroup: GPUBindGroup,
   vertexBuffer: GPUBuffer,
 ) {
@@ -214,14 +195,16 @@ function _sendCommands(
         storeOp: 'store',
       },
     ],
-    depthStencilAttachment: {
-      view: depthView,
+  };
 
+  if (depthView) {
+    renderPassDescriptor.depthStencilAttachment = {
+      view: depthView,
       depthClearValue: 1.0,
       depthLoadOp: 'clear',
       depthStoreOp: 'store',
-    },
-  };
+    };
+  }
 
   const commandEncoder = device.createCommandEncoder();
   const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);

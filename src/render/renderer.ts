@@ -4,7 +4,7 @@ import { RenderTarget } from './rendertarget';
 export type RenderSize = Size;
 
 export interface Renderer {
-  update(time: number): void;
+  update(time: number, target: RenderTarget): void;
   renderFrame(target: RenderTarget): void;
 }
 
@@ -14,23 +14,24 @@ export interface RendererContext {
   context: GPUCanvasContext;
   devicePixelRatio: number;
   presentationFormat: GPUTextureFormat;
-  renderSize: RenderSize;
 }
+
+const WebGpuNotSupportedError = new Error('WebGPU not supported');
 
 export async function setupCanvasAndContext(
   canvas: HTMLCanvasElement,
 ): Promise<RendererContext> {
   const adapter = await navigator.gpu.requestAdapter();
   if (!adapter) {
-    throw new Error('WebGPU not supported');
+    throw WebGpuNotSupportedError;
   }
   const device = await adapter?.requestDevice();
   if (!device) {
-    throw new Error('WebGPU not supported');
+    throw WebGpuNotSupportedError;
   }
   const context = canvas.getContext('webgpu');
   if (!context) {
-    throw new Error('WebGPU not supported');
+    throw WebGpuNotSupportedError;
   }
 
   // const devicePixelRatio = window.devicePixelRatio;
@@ -39,16 +40,13 @@ export async function setupCanvasAndContext(
   const presentationFormat = navigator.gpu.getPreferredCanvasFormat();
 
   if (!device) {
-    throw new Error('WebGPU not supported');
+    throw WebGpuNotSupportedError;
   }
   context.configure({
     device,
     format: presentationFormat,
     alphaMode: 'premultiplied' as GPUCanvasAlphaMode,
-    // alphaMode: 'premultiplied',
-  });
-
-  const renderSize = new Size(canvas.width, canvas.height);
+  } as GPUCanvasConfiguration);
 
   return {
     device,
@@ -56,6 +54,5 @@ export async function setupCanvasAndContext(
     context,
     devicePixelRatio,
     presentationFormat,
-    renderSize,
   };
 }

@@ -9,7 +9,7 @@ import { RenderTarget } from './rendertarget';
 const NUM_VERTICES = 4;
 const WAVE_PERIOD = 3000;
 
-export class ScreenRenderer extends Renderer {
+export class ScreenRenderer implements Renderer {
   private pipeline: GPURenderPipeline;
   private uniformBuffer: GPUBuffer;
   private uniformBindGroup: GPUBindGroup;
