@@ -9,13 +9,10 @@ import { RenderTarget } from './rendertarget';
 
 const NUM_VERTICES = 4;
 
-const DEFAULT_VERTEX_SHADER = Shader.default();
-const DEFAULT_FRAGMENT_SHADER = Shader.default();
 const DEFAULT_COLOR = [0.0, 0.4, 0.7, 0.4];
 
 export type ColorType = [number, number, number, number];
 export interface BaseRendererOptions {
-  image?: string;
   vertexShader?: ShaderType;
   fragmentShader?: ShaderType;
   texture?: GPUTexture;
@@ -31,11 +28,6 @@ export class BaseRenderer implements Renderer {
     private renderContext: RendererContext,
     private options: BaseRendererOptions = {},
   ) {
-    options = {
-      vertexShader: DEFAULT_VERTEX_SHADER,
-      fragmentShader: DEFAULT_FRAGMENT_SHADER,
-      ...options,
-    };
     this.pipeline = this._initPipeline(options);
     const { uniformBuffer, uniformBindGroup } = this._initUniforms();
 
@@ -54,7 +46,10 @@ export class BaseRenderer implements Renderer {
   _initPipeline(options: BaseRendererOptions) {
     const { device, presentationFormat } = this.renderContext;
 
-    function getShaderSource(shader: ShaderType) {
+    function getShaderSource(shader?: ShaderType): string {
+      if (!shader) {
+        return Shader.default().source;
+      }
       if (typeof shader === 'string') {
         return shader;
       }

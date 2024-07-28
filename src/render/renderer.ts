@@ -3,6 +3,9 @@ import { RenderTarget } from './rendertarget';
 
 export type RenderSize = Size;
 
+type IRendererConstructor<T extends Renderer> = new (...args: any[]) => T;
+export type RendererConstructor = IRendererConstructor<Renderer>;
+
 export interface Renderer {
   update(time: number, target: RenderTarget): void;
   renderFrame(target: RenderTarget): void;

@@ -1,4 +1,4 @@
-import { Mat3x3, Vec2 } from './types';
+import { Mat3x3, Point, Size, Vec2 } from './types';
 
 interface SceneOptions {
   bounds?: { width: number; height: number; far: number };
@@ -7,11 +7,25 @@ interface SceneOptions {
 const DEFAULT_SCENE_OPTIONS = {
   bounds: { width: 800, height: 600, far: 1 },
 };
+
+export interface World {
+  size: Size;
+  backgroundColor: Color;
+}
+export interface Entity {
+  position: Point;
+  size: Size;
+  color: string;
+}
+
 export class Scene {
   public bounds: { width: number; height: number };
-  private model: Mat3x3 = new Mat3x3();
-  private view: Mat3x3 = new Mat3x3();
-  private projection: Mat3x3 = new Mat3x3();
+  public entities: Entity[] = [];
+  public camera: Entity;
+
+  // private model: Mat3x3 = new Mat3x3();
+  // private view: Mat3x3 = new Mat3x3();
+  // private projection: Mat3x3 = new Mat3x3();
 
   constructor(options: SceneOptions = {}) {
     const { bounds } = { ...DEFAULT_SCENE_OPTIONS, ...options };

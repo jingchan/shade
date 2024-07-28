@@ -8,6 +8,7 @@ import {
 } from 'vue';
 import {
   Renderer,
+  RendererConstructor,
   RendererContext,
   setupCanvasAndContext,
 } from '../render/renderer';
@@ -16,14 +17,19 @@ import { RenderTarget } from '../render/rendertarget';
 import { Size } from '../types';
 import { BaseRendererOptions } from '../render/base';
 
-type RendererConstructor<T extends Renderer> = new (...args: any[]) => T;
+export interface CanvasViewOptions extends Partial<BaseRendererOptions> {
+  image?: string;
+  scale?: number;
+}
 
 interface Props {
-  renderer: RendererConstructor<Renderer>;
-  options?: BaseRendererOptions;
+  name?: string;
+  renderer: RendererConstructor;
+  options?: CanvasViewOptions;
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  name: undefined,
   renderer: TriangleRenderer,
   options: undefined,
 });
@@ -32,6 +38,7 @@ const canvasEl = ref<HTMLCanvasElement>();
 let context: RendererContext | null = null;
 let current_renderer: Renderer | null = null;
 let frameHandle: number = 0;
+let frameTime: number = 0;
 
 async function setupContext() {
   const canvas = canvasEl.value!;
@@ -69,6 +76,7 @@ async function setupContext() {
     return texture;
   })();
 
+  // Create Renderer.
   current_renderer = new props.renderer(context, {
     ...props.options,
     texture,
@@ -77,38 +85,63 @@ async function setupContext() {
   return { context, current_renderer };
 }
 
+function resizeCanvasColorBuffer() {
+  // Resize backing colorbuffer if canvas size changed.
+  if (!canvasEl.value) {
+    throw new Error('No canvas element.');
+  }
+  const { width, height } = canvasEl.value;
+  if (!width || !height) {
+    throw new Error('No canvas width or height.');
+  }
+  const scaledWidth = canvasEl.value?.clientWidth / (props.options?.scale || 1);
+  const scaledHeight =
+    canvasEl.value?.clientHeight / (props.options?.scale || 1);
+  if (
+    canvasEl.value?.width !== scaledWidth ||
+    canvasEl.value?.height !== scaledHeight
+  ) {
+    canvasEl.value.width = scaledWidth;
+    canvasEl.value.height = scaledHeight;
+  }
+}
+
 async function startAnimationLoop() {
+  let lastTime = performance.now();
   async function frameLoop(time: DOMHighResTimeStamp) {
-    if (context === null || current_renderer === null) {
+    if (!context || !current_renderer) {
       const res = await setupContext();
       context = res.context;
       current_renderer = res.current_renderer;
     }
 
-    // Resize backing colorbuffer if canvas size changed.
-    if (
-      canvasEl.value &&
-      (canvasEl.value?.width !== canvasEl.value?.clientWidth ||
-        canvasEl.value?.height !== canvasEl.value?.clientHeight)
-    ) {
-      canvasEl.value.width = canvasEl.value.clientWidth;
-      canvasEl.value.height = canvasEl.value.clientHeight;
+    const deltaTime = time - lastTime;
+    lastTime = time;
+    frameTime += deltaTime;
+
+    if (!canvasEl.value) {
+      return;
     }
 
     // TODO: Only re-create when needed.  This creates a new depth every frame.
     try {
       const target = new RenderTarget(context, true);
 
-      current_renderer.update(time, target);
+      current_renderer.update(frameTime, target);
       current_renderer.renderFrame(target);
     } catch (e) {
-      console.log('Caught error trying to get rendertarget.', e);
+      console.log(
+        `Error (${props.name}): Caught error trying to get rendertarget.`,
+        e,
+      );
+      context = null;
     }
     frameHandle = requestAnimationFrame(frameLoop);
   }
   frameHandle = requestAnimationFrame(frameLoop);
 }
 onMounted(async () => {
+  resizeCanvasColorBuffer();
   startAnimationLoop();
 });
 onUpdated(async () => {
@@ -125,7 +158,57 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <canvas ref="canvasEl" />
+  <div class="container">
+    <div class="title">{{ name }}</div>
+    <div class="canvas-container">
+      <canvas ref="canvasEl" class="canvas" />
+    </div>
+  </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* margin: 0.2em; */
+  /* box-sizing: content-box; */
+  margin-bottom: 0.1em;
+  background-color: rgb(83, 83, 83);
+  background-color: rgb(255, 255, 255);
+  box-shadow: 3px 3px 6px 2px rgba(0, 0, 0, 0.4);
+  font-size: 0.8em;
+}
+
+.title {
+  /* font-size: 1em; */
+  /* font-weight: bold; */
+  color: rgb(30, 30, 30);
+  /* font-weight: 500; */
+  padding: 0.2em 0;
+  text-align: center;
+  width: 100%;
+  text-wrap: wrap;
+  background-color: rgba(200, 200, 200, 0.8);
+  /* background-color: #282a36;
+  background-color: hsl(231.43deg 14.89% 18.43%); */
+}
+.canvas-container {
+  /* display: flex; */
+  width: 100%;
+  padding: 0.2em;
+  flex-grow: 1;
+  /* aspect-ratio: 1 / 1; */
+}
+.canvas {
+  /* min-height: 100px;
+  min-width: 100px; */
+  width: 100%;
+  /* height: 100%; */
+  aspect-ratio: 1 / 1;
+  /* min-width: 300px;
+  min-height: 300px; */
+  /* min-height: 100px; */
+  /* aspect-ratio: 3; */
+}
+</style>

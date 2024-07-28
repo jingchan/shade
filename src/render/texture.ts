@@ -181,7 +181,7 @@ function _updateUniforms(
     0.0, 0.0, 1.0, 0.0,
 
     // Color
-    1.0, 0.0, 0.0, wave, // red
+    1.0, 0.0, 0.0, 1.0*wave, // red
   ]);
 
   device.queue.writeBuffer(

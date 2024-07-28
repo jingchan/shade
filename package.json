@@ -5,7 +5,7 @@
   "description": "",
   "author": "Jing Chan",
   "license": "ISC",
-  "keywords": [ ],
+  "keywords": [],
   "main": "index.js",
   "scripts": {
     "dev": "vite",
@@ -22,6 +22,7 @@
   "dependencies": {
     "@vueuse/core": "^10.11.0",
     "gsap": "^3.12.5",
+    "nuxt": "^3.12.4",
     "pixi.js": "^8.2.5",
     "vue": "^3.4.33",
     "wgpu-matrix": "^3.0.1"

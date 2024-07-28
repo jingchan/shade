@@ -11,7 +11,7 @@ export class Shader {
 
   get source() {
     // Append the common.wgsl
-    return CommonWgsl + this._source;
+    return [CommonWgsl, this._source].join('\n');
   }
 
   static default() {

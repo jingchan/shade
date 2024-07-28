@@ -4,7 +4,7 @@ import { onMounted, ref } from 'vue';
 import { CardStack } from '../cardStack.ts';
 import { Card } from '../card.ts';
 import CardStackView from './CardStackView.vue';
-import CanvasView from './CanvasView.vue';
+import CanvasView, { CanvasViewOptions } from './CanvasView.vue';
 import { TriangleRenderer } from '../render/triangle.ts';
 import { CubeRenderer } from '../render/cube.ts';
 import { ScreenRenderer } from '../render/screen.ts';
@@ -12,7 +12,147 @@ import { TextureRenderer } from '../render/texture.ts';
 import { BaseRenderer } from '../render/base';
 import checkerShader from '../shaders/checker.wgsl';
 import baseShader from '../shaders/base.wgsl';
+import perlinShader from '../shaders/perlin.wgsl';
+import noiseShader from '../shaders/noise.wgsl';
+import circleShader from '../shaders/circle.wgsl';
+import ellipseShader from '../shaders/ellipse.wgsl';
+import marchShader from '../shaders/march.wgsl';
+import triShader from '../shaders/tri.wgsl';
+import roundedTriShader from '../shaders/roundedTri.wgsl';
+import lineShader from '../shaders/line.wgsl';
+import boxShader from '../shaders/box.wgsl';
+import roundedBoxShader from '../shaders/roundedBox.wgsl';
 import { Shader } from '../shader.ts';
+
+const DEMOS: {
+  name: string;
+  renderer: RendererType;
+  options?: CanvasViewOptions;
+} = [
+  { name: 'screen', renderer: ScreenRenderer },
+  { name: 'tri', renderer: TriangleRenderer },
+  { name: 'cube', renderer: CubeRenderer },
+  {
+    name: 'texture',
+    renderer: TextureRenderer,
+    options: {
+      image: new URL('../assets/Placeholder.png', import.meta.url).href,
+    },
+  },
+  {
+    name: 'options (base)',
+    renderer: BaseRenderer,
+    options: {
+      // color: [1.0, 0.0, 1.0, 0.5],
+    },
+  },
+  {
+    name: 'checker (base)',
+    renderer: BaseRenderer,
+    options: { vertexShader: checkerShader, fragmentShader: checkerShader },
+  },
+  {
+    name: 'custom shader (base)',
+    renderer: BaseRenderer,
+    options: {
+      vertexShader: new Shader(baseShader),
+      fragmentShader: new Shader(baseShader),
+      color: [1.0, 0.0, 1.0, 0.5],
+    },
+  },
+  {
+    name: 'perlin noise (base)',
+    renderer: BaseRenderer,
+    options: {
+      vertexShader: new Shader(perlinShader),
+      fragmentShader: new Shader(perlinShader),
+      // color: [1.0, 0.0, 1.0, 0.5],
+      scale: 2,
+    },
+  },
+  {
+    name: 'noise (base)',
+    renderer: BaseRenderer,
+    options: {
+      vertexShader: new Shader(noiseShader),
+      fragmentShader: new Shader(noiseShader),
+      // color: [1.0, 0.0, 1.0, 0.5],
+      scale: 2,
+    },
+  },
+  {
+    name: 'SDF: circle',
+    renderer: BaseRenderer,
+    options: {
+      vertexShader: new Shader(circleShader),
+      fragmentShader: new Shader(circleShader),
+      // color: [1.0, 0.0, 1.0, 0.5],
+    },
+  },
+  {
+    name: 'SDF: box',
+    renderer: BaseRenderer,
+    options: {
+      vertexShader: new Shader(boxShader),
+      fragmentShader: new Shader(boxShader),
+      // color: [1.0, 0.0, 1.0, 0.5],
+    },
+  },
+  {
+    name: 'SDF: roundedBox',
+    renderer: BaseRenderer,
+    options: {
+      vertexShader: new Shader(roundedBoxShader),
+      fragmentShader: new Shader(roundedBoxShader),
+      // color: [1.0, 0.0, 1.0, 0.5],
+    },
+  },
+  {
+    name: 'SDF: triangle',
+    renderer: BaseRenderer,
+    options: {
+      vertexShader: new Shader(triShader),
+      fragmentShader: new Shader(triShader),
+      // color: [1.0, 0.0, 1.0, 0.5],
+    },
+  },
+  {
+    name: 'SDF: round triangle',
+    renderer: BaseRenderer,
+    options: {
+      vertexShader: new Shader(roundedTriShader),
+      fragmentShader: new Shader(roundedTriShader),
+      // color: [1.0, 0.0, 1.0, 0.5],
+    },
+  },
+  {
+    name: 'SDF: line',
+    renderer: BaseRenderer,
+    options: {
+      vertexShader: new Shader(lineShader),
+      fragmentShader: new Shader(lineShader),
+      // color: [1.0, 0.0, 1.0, 0.5],
+    },
+  },
+  {
+    name: 'Ray Marching',
+    renderer: BaseRenderer,
+    options: {
+      vertexShader: new Shader(marchShader),
+      fragmentShader: new Shader(marchShader),
+      // color: [1.0, 0.0, 1.0, 0.5],
+    },
+  },
+  {
+    name: 'SDF: ellipse',
+    renderer: BaseRenderer,
+    options: {
+      vertexShader: new Shader(ellipseShader),
+      fragmentShader: new Shader(ellipseShader),
+      // color: [1.0, 0.0, 1.0, 0.5],
+    },
+  },
+];
 
 // const cards = ref(CardStack.example());
 const cards = ref(new CardStack([]));
@@ -28,45 +168,39 @@ function removeCard() {
 onMounted(() => {
   cards.value = new CardStack([Card.random(), Card.random()]);
 });
-const textureImage = new URL('../assets/Placeholder.png', import.meta.url).href;
+
+const demoWidth = ref(200);
+const demoCols = ref(4);
 </script>
 
 <template>
   <div class="main">
     Hello
     <div class="canvases">
-      <CanvasView :renderer="ScreenRenderer" class="demo-canvas" />
-      <CanvasView :renderer="TriangleRenderer" class="demo-canvas" />
-      <CanvasView :renderer="CubeRenderer" class="demo-canvas" />
       <CanvasView
-        :renderer="TextureRenderer"
-        :options="{ image: textureImage }"
-        class="demo-canvas"
+        v-for="demo in DEMOS"
+        :key="demo.name"
+        :name="demo.name"
+        :renderer="demo.renderer"
+        :options="demo.options"
       />
-      <CanvasView
-        :renderer="BaseRenderer"
-        :options="{
-          vertexShader: checkerShader,
-          fragmentShader: checkerShader,
-        }"
-        class="demo-canvas"
-      />
-      <CanvasView :renderer="BaseRenderer" :options="{}" class="demo-canvas" />
-      <CanvasView
-        :renderer="BaseRenderer"
-        :options="{
-          vertexShader: new Shader(baseShader),
-          fragmentShader: new Shader(baseShader),
-          color: [1.0, 0.0, 1.0, 0.5],
-        }"
-        class="demo-canvas"
-      />
-      <!-- <CanvasView
-        :renderer="AreaRenderer"
-        :image="textureImage"
-        class="demo-canvas"
-      /> -->
     </div>
+    <!-- <input v-model="demoWidth" type="range" min="100" max="1000" step="0.01" />
+    <label for="demoCols"># Columns</label> -->
+    <input
+      v-model="demoCols"
+      id="demoCols"
+      type="range"
+      min="1"
+      max="8"
+      step="1"
+    />
+    <label for="demoCols"># Columns</label>
+    <!-- <form>
+      <input v-model="demoCols" id="asdf" type="checkbox" />
+      <label for="asdf">awef</label>
+    </form> -->
+    <div>{{ demoWidth }}</div>
     <button class="button" type="button" @click="addRandomCard">
       Add Card
     </button>
@@ -97,17 +231,6 @@ const textureImage = new URL('../assets/Placeholder.png', import.meta.url).href;
   cursor: pointer;
 }
 
-/* .card {
-  background-color: rgba(130, 200, 180, 0.8);
-  @apply no-selection;
-} */
-/* .card:hover {
-  background-color: rgba(30, 200, 80, 0.8);
-}
-.card:active {
-  background-color: rgba(30, 100, 180, 0.8);
-} */
-
 .no-selection {
   user-select: none;
 }
@@ -121,7 +244,8 @@ const textureImage = new URL('../assets/Placeholder.png', import.meta.url).href;
 }
 
 .canvases {
-  display: flex;
+  display: grid;
+  grid-template-columns: v-bind('`repeat(${demoCols}, minmax(200px, 1fr))`');
   justify-content: start;
   flex-wrap: wrap;
   gap: 20px;
@@ -129,9 +253,12 @@ const textureImage = new URL('../assets/Placeholder.png', import.meta.url).href;
   margin-right: 20px;
 }
 
-.demo-canvas {
-  width: 500px;
-  height: 400px;
-  background-color: #ddd;
+.canvases-flex {
+  display: flex;
+  justify-content: start;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-left: 20px;
+  margin-right: 20px;
 }
 </style>
