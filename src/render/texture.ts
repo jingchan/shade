@@ -1,7 +1,7 @@
 /**
  * Renders a texture to a quad.
  */
-import { Shader } from '../shader';
+import { ShaderCode } from '../shader';
 import TextureWsgl from '../shaders/texture.wgsl';
 import { BaseRendererOptions } from './base';
 import {
@@ -71,7 +71,7 @@ export class TextureRenderer implements Renderer {
       layout: 'auto',
       vertex: {
         module: device.createShaderModule({
-          code: new Shader(TextureWsgl).source,
+          code: new ShaderCode(TextureWsgl).source,
         }),
         buffers: [
           {
@@ -93,7 +93,7 @@ export class TextureRenderer implements Renderer {
       } as GPUVertexState,
       fragment: {
         module: device.createShaderModule({
-          code: new Shader(TextureWsgl).source,
+          code: new ShaderCode(TextureWsgl).source,
         }),
         targets: [
           {

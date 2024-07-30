@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { useElementSize } from '@vueuse/core';
 import { ref } from 'vue';
-import type { CardStack } from '../cardStack';
-import type { Card } from '../card';
-import type { PositioningInfo } from '../positioning/arc';
-import { calculateArcPositions } from '../positioning/arc';
-import { FreePositioning } from '../positioning/free';
-import { Angle, Point, Size } from '../types';
+import type { CardStack } from '../../cardStack';
+import type { Card } from '../../card';
+import type { PositioningInfo } from '../../positioning/arc';
+import { calculateArcPositions } from '../../positioning/arc';
+import { FreePositioning } from '../../positioning/free';
+import { Angle, Point, Size } from '../../types';
 import CardView from './CardView.vue';
 
 const props = defineProps<{

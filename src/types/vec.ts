@@ -1,3 +1,5 @@
+import { Angle } from './angle';
+
 export type Vec2Like = Vec2 | Point | Size | { x: number; y: number };
 export class Vec2 {
   public x: number;

@@ -1,4 +1,4 @@
-import type { Card } from './card';
+import { Card } from './card';
 import { DEBUG_CARDS } from './debug';
 
 interface CardIterator {
@@ -97,6 +97,6 @@ export class CardStack implements CardIterator {
   }
 
   static example() {
-    return new CardStack(DEBUG_CARDS);
+    return new CardStack(DEBUG_CARDS.map((config) => new Card(config)));
   }
 }

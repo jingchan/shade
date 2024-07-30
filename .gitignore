@@ -33,3 +33,4 @@ node_modules
 .nitro
 .cache
 dist
+.vercel

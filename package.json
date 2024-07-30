@@ -22,9 +22,8 @@
   "dependencies": {
     "@vueuse/core": "^10.11.0",
     "gsap": "^3.12.5",
-    "nuxt": "^3.12.4",
-    "pixi.js": "^8.2.5",
     "vue": "^3.4.33",
+    "vue-router": "^4.4.0",
     "wgpu-matrix": "^3.0.1"
   },
   "devDependencies": {
@@ -42,6 +41,8 @@
     "eslint-plugin-vue": "9.27.0",
     "globals": "15.8.0",
     "lint-staged": "^15.2.7",
+    "monaco-editor": "^0.50.0",
+    "monaco-editor-vue": "^1.0.10",
     "postcss": "^8.4.39",
     "prettier": "3.3.3",
     "simple-git-hooks": "^2.11.1",

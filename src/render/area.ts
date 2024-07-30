@@ -41,7 +41,7 @@ function _createPipeline(renderContext: RendererContext) {
   const { device, presentationFormat } = renderContext;
 
   const pipeline = device.createRenderPipeline({
-    label: 'screen-pipeline',
+    label: 'area-pipeline',
     layout: 'auto',
     vertex: {
       module: device.createShaderModule({

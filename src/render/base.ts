@@ -2,7 +2,7 @@
  * Base Renderer class.
  */
 
-import { Shader, ShaderType } from '../shader';
+import { ShaderCode, ShaderType } from '../shader';
 import type { Renderer } from './renderer';
 import { RendererContext } from './renderer';
 import { RenderTarget } from './rendertarget';
@@ -48,7 +48,7 @@ export class BaseRenderer implements Renderer {
 
     function getShaderSource(shader?: ShaderType): string {
       if (!shader) {
-        return Shader.default().source;
+        return ShaderCode.default().source;
       }
       if (typeof shader === 'string') {
         return shader;
@@ -56,7 +56,7 @@ export class BaseRenderer implements Renderer {
       return shader.source;
     }
     const pipeline = device.createRenderPipeline({
-      label: 'screen-pipeline',
+      label: 'base-pipeline',
       layout: 'auto',
       vertex: {
         module: device.createShaderModule({

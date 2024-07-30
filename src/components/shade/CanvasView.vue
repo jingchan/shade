@@ -10,12 +10,12 @@ import {
   Renderer,
   RendererConstructor,
   RendererContext,
-  setupCanvasAndContext,
-} from '../render/renderer';
-import { TriangleRenderer } from '../render/triangle';
-import { RenderTarget } from '../render/rendertarget';
-import { Size } from '../types';
-import { BaseRendererOptions } from '../render/base';
+  setupWebGpuContext,
+} from '../../render/renderer';
+import { TriangleRenderer } from '../../render/triangle';
+import { RenderTarget } from '../../render/rendertarget';
+import { Size } from '../../types';
+import { BaseRendererOptions } from '../../render/base';
 
 export interface CanvasViewOptions extends Partial<BaseRendererOptions> {
   image?: string;
@@ -24,19 +24,19 @@ export interface CanvasViewOptions extends Partial<BaseRendererOptions> {
 
 interface Props {
   name?: string;
-  renderer: RendererConstructor;
+  rendererConstructor: RendererConstructor;
   options?: CanvasViewOptions;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   name: undefined,
-  renderer: TriangleRenderer,
+  rendererConstructor: TriangleRenderer,
   options: undefined,
 });
 
 const canvasEl = ref<HTMLCanvasElement>();
 let context: RendererContext | null = null;
-let current_renderer: Renderer | null = null;
+let renderer: Renderer | null = null;
 let frameHandle: number = 0;
 let frameTime: number = 0;
 
@@ -45,7 +45,7 @@ async function setupContext() {
   if (!canvas) {
     throw new Error('No canvas element.');
   }
-  const context = await setupCanvasAndContext(canvas);
+  const context = await setupWebGpuContext(canvas);
 
   const texture = await (async () => {
     if (!props.options?.image) {
@@ -77,12 +77,12 @@ async function setupContext() {
   })();
 
   // Create Renderer.
-  current_renderer = new props.renderer(context, {
+  renderer = new props.rendererConstructor(context, {
     ...props.options,
     texture,
   });
 
-  return { context, current_renderer };
+  return { context, renderer };
 }
 
 function resizeCanvasColorBuffer() {
@@ -109,10 +109,10 @@ function resizeCanvasColorBuffer() {
 async function startAnimationLoop() {
   let lastTime = performance.now();
   async function frameLoop(time: DOMHighResTimeStamp) {
-    if (!context || !current_renderer) {
+    if (!context || !renderer) {
       const res = await setupContext();
       context = res.context;
-      current_renderer = res.current_renderer;
+      renderer = res.renderer;
     }
 
     const deltaTime = time - lastTime;
@@ -127,8 +127,8 @@ async function startAnimationLoop() {
     try {
       const target = new RenderTarget(context, true);
 
-      current_renderer.update(frameTime, target);
-      current_renderer.renderFrame(target);
+      renderer.update(frameTime, target);
+      renderer.renderFrame(target);
     } catch (e) {
       console.log(
         `Error (${props.name}): Caught error trying to get rendertarget.`,
@@ -181,34 +181,29 @@ onBeforeUnmount(() => {
 }
 
 .title {
-  /* font-size: 1em; */
-  /* font-weight: bold; */
   color: rgb(30, 30, 30);
-  /* font-weight: 500; */
-  padding: 0.2em 0;
+  padding: 0.2rem 0;
   text-align: center;
   width: 100%;
   text-wrap: wrap;
-  background-color: rgba(200, 200, 200, 0.8);
-  /* background-color: #282a36;
-  background-color: hsl(231.43deg 14.89% 18.43%); */
+  background-color: rgba(250, 250, 250, 0.1);
+  font-size: 1rem;
+  font-weight: 100;
+  font-family: Arial, Helvetica, sans-serif;
+  letter-spacing: 0.06rem;
+  line-height: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
+
 .canvas-container {
-  /* display: flex; */
   width: 100%;
-  padding: 0.2em;
   flex-grow: 1;
-  /* aspect-ratio: 1 / 1; */
 }
 .canvas {
-  /* min-height: 100px;
-  min-width: 100px; */
+  display: block;
   width: 100%;
-  /* height: 100%; */
   aspect-ratio: 1 / 1;
-  /* min-width: 300px;
-  min-height: 300px; */
-  /* min-height: 100px; */
-  /* aspect-ratio: 3; */
 }
 </style>

@@ -1,4 +1,6 @@
+import { ShaderCode, ShaderModule } from '../shader';
 import { Size } from '../types';
+import { RenderPipeline } from './pipeline';
 import { RenderTarget } from './rendertarget';
 
 export type RenderSize = Size;
@@ -11,6 +13,9 @@ export interface Renderer {
   renderFrame(target: RenderTarget): void;
 }
 
+/**
+ * Handles all interaction between context (browser, canvas) for the rendering pipeline.
+ */
 export interface RendererContext {
   adapter: GPUAdapter;
   device: GPUDevice;
@@ -21,7 +26,7 @@ export interface RendererContext {
 
 const WebGpuNotSupportedError = new Error('WebGPU not supported');
 
-export async function setupCanvasAndContext(
+export async function setupWebGpuContext(
   canvas: HTMLCanvasElement,
 ): Promise<RendererContext> {
   const adapter = await navigator.gpu.requestAdapter();
@@ -58,4 +63,68 @@ export async function setupCanvasAndContext(
     devicePixelRatio,
     presentationFormat,
   };
+}
+/**
+ * Central object for rendering orchestration.
+ */
+export class RenderingModule {
+  /**
+   * Prefer using `build` for async initialization.
+   */
+  constructor(private device: GPUDevice) {}
+
+  /**
+   * Async initialization of the rendering module.
+   */
+  async build() {
+    const adapter = await navigator.gpu.requestAdapter();
+    if (!adapter) {
+      throw WebGpuNotSupportedError;
+    }
+    // TODO: Only log/check these in debug situations.
+    console.log(adapter.features);
+    console.log(adapter.limits);
+    console.log(adapter.info);
+    console.log(adapter.isFallbackAdapter);
+
+    const device = await adapter.requestDevice();
+    if (!device) {
+      throw WebGpuNotSupportedError;
+    }
+    return new RenderingModule(device);
+  }
+
+  getPreferredCanvasFormat() {
+    return navigator.gpu.getPreferredCanvasFormat();
+  }
+  /**
+   * Creates a shader module from the given code.
+   */
+  createShader(code: ShaderCode): ShaderModule {
+    // TODO: Memoize if same code detected.
+    return new ShaderModule(this.device, code);
+  }
+
+  destroy() {
+    this.device.destroy();
+  }
+
+  /**
+   * Creates a rendering pipeline.
+   *
+   * @param vertex The vertex ShaderModule.
+   * @param fragment The fragment shader module, if not provided, vertex ShaderModule will be used.
+   */
+  async createRenderPipeline(
+    vertex: ShaderModule,
+    fragment?: ShaderModule,
+  ): Promise<RenderPipeline> {
+    if (!fragment) {
+      fragment = vertex;
+    }
+
+    return RenderPipeline.build(this.device, vertex, fragment, {
+      presentationFormat: this.getPreferredCanvasFormat(),
+    });
+  }
 }
