@@ -17,29 +17,37 @@ export interface Renderer {
  * Handles all interaction between context (browser, canvas) for the rendering pipeline.
  */
 export interface RendererContext {
-  adapter: GPUAdapter;
   device: GPUDevice;
   context: GPUCanvasContext;
   devicePixelRatio: number;
   presentationFormat: GPUTextureFormat;
 }
 
-const WebGpuNotSupportedError = new Error('WebGPU not supported');
+class WebGpuNotSupportedError extends Error {
+  constructor(msg: string) {
+    super(msg);
+  }
+}
 
-export async function setupWebGpuContext(
-  canvas: HTMLCanvasElement,
-): Promise<RendererContext> {
+export async function setupDevice() {
   const adapter = await navigator.gpu.requestAdapter();
   if (!adapter) {
-    throw WebGpuNotSupportedError;
+    throw new WebGpuNotSupportedError('Could not request adapter.');
   }
   const device = await adapter?.requestDevice();
   if (!device) {
-    throw WebGpuNotSupportedError;
+    throw new WebGpuNotSupportedError('Could not request device.');
   }
+  return device;
+}
+
+export async function setupWebGpuContext(
+  device: GPUDevice,
+  canvas: HTMLCanvasElement,
+): Promise<RendererContext> {
   const context = canvas.getContext('webgpu');
   if (!context) {
-    throw WebGpuNotSupportedError;
+    throw new WebGpuNotSupportedError('Could not get webgpu context.');
   }
 
   // const devicePixelRatio = window.devicePixelRatio;
@@ -48,7 +56,7 @@ export async function setupWebGpuContext(
   const presentationFormat = navigator.gpu.getPreferredCanvasFormat();
 
   if (!device) {
-    throw WebGpuNotSupportedError;
+    throw new WebGpuNotSupportedError('No device.');
   }
   context.configure({
     device,
@@ -58,7 +66,6 @@ export async function setupWebGpuContext(
 
   return {
     device,
-    adapter,
     context,
     devicePixelRatio,
     presentationFormat,
@@ -79,7 +86,7 @@ export class RenderingModule {
   async build() {
     const adapter = await navigator.gpu.requestAdapter();
     if (!adapter) {
-      throw WebGpuNotSupportedError;
+      throw new WebGpuNotSupportedError('No adapter.');
     }
     // TODO: Only log/check these in debug situations.
     console.log(adapter.features);
@@ -89,7 +96,7 @@ export class RenderingModule {
 
     const device = await adapter.requestDevice();
     if (!device) {
-      throw WebGpuNotSupportedError;
+      throw new WebGpuNotSupportedError('No device.');
     }
     return new RenderingModule(device);
   }

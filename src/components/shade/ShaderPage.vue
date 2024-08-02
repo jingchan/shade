@@ -1,18 +1,20 @@
 <script setup lang="ts">
-import { computed, onMounted, provide, Ref, ref } from 'vue';
+import { computed, provide, Ref, ref, shallowRef } from 'vue';
 
 import { useRoute } from 'vue-router';
 import { DEFAULT_SHADER_CODE, ShaderCode, SHADERS } from '../../shader';
 import { BaseRenderer } from '../../render/base';
-import Editor from './Editor.vue';
+import EditorView from './EditorView.vue';
 import RenderView from './RenderView.vue';
 import clamp from '../../utils/clamp';
 import { isString } from '../../utils/string';
+import { MonacoEditor } from '../../edit/monaco';
 
 const emit = defineEmits<{
   contentChanged: [code: string];
 }>();
 const mainEl = ref<HTMLElement | null>(null);
+const monacoEditor = shallowRef(new MonacoEditor());
 
 const splitRatio = ref(0.5);
 function updateSplitRatio(newRatio: number) {
@@ -25,34 +27,20 @@ provide('splitRatio', {
   splitRatio,
 });
 
-// const shader_id = ref(null);
 function getShaderCode(id: string) {
   if (isString(id)) {
-    return SHADERS[id];
+    return new ShaderCode(SHADERS[id]);
   }
-  for (const [key, value] of Object.entries(SHADERS)) {
-    if (shader_id.value == key) {
-      return value;
-    }
-  }
+  return new ShaderCode(DEFAULT_SHADER_CODE);
 }
 
 const shader_id: Ref<string> = ref(route.params.id as string);
-const shader = computed(() => {
-  const shader_code = getShaderCode(shader_id.value);
-  if (shader_code) {
-    return new ShaderCode(shader_code);
-  } else {
-    return new ShaderCode(DEFAULT_SHADER_CODE);
-  }
-});
-
-onMounted(() => {
-  console.log('shader_id', shader_id.value);
-});
+const initialCode = computed(() => getShaderCode(shader_id.value));
+const editedCode = ref<ShaderCode>(getShaderCode(shader_id.value));
 
 function handleContentChanged(newCode: string) {
-  // code.value = newCode;
+  editedCode.value = new ShaderCode(newCode);
+  console.log('ShaderPage: Received content changed', newCode.length);
   emit('contentChanged', newCode);
 }
 
@@ -104,7 +92,10 @@ function handlePointerDown(event: PointerEvent) {
 <template>
   <div ref="mainEl" class="main">
     <div class="display" :style="{ width: `${splitRatio * 100}%` }">
-      <RenderView :renderer-constructor="BaseRenderer" :shader="shader" />
+      <RenderView
+        :rendererConstructor="BaseRenderer"
+        :shaderCode="editedCode"
+      />
       Hello From Shader PAge.
     </div>
     <div class="divider">
@@ -122,7 +113,11 @@ function handlePointerDown(event: PointerEvent) {
       </div>
     </div>
     <div class="edit">
-      <Editor :shader="shader" @contentChanged="handleContentChanged" />
+      <EditorView
+        :content="initialCode?.userSource"
+        :editor="monacoEditor"
+        @contentChanged="handleContentChanged"
+      />
     </div>
   </div>
 </template>

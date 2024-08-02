@@ -48,7 +48,7 @@ export default [
   {
     rules: {
       'vue/multi-word-component-names': 'off',
-      // 'vue/attribute-hyphenation': ['error', 'never'],
+      'vue/attribute-hyphenation': ['error', 'never'],
       'vue/v-on-event-hyphenation': ['error', 'never'],
       'vue/no-v-html': 'off',
 

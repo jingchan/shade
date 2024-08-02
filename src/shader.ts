@@ -18,6 +18,7 @@ export class ShaderCode {
 
   constructor(
     source: string,
+    public name?: string,
     private includeCommonLib = true,
   ) {
     this._source = source;
@@ -45,7 +46,7 @@ export class ShaderCode {
   }
 
   static default() {
-    return new ShaderCode(base);
+    return new ShaderCode(base, 'default');
   }
 }
 

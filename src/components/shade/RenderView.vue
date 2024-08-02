@@ -1,19 +1,12 @@
 <script setup lang="ts">
-import {
-  onBeforeUnmount,
-  onBeforeUpdate,
-  onMounted,
-  onUpdated,
-  Ref,
-  ref,
-} from 'vue';
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import {
   Renderer,
   RendererConstructor,
   RendererContext,
+  setupDevice,
   setupWebGpuContext,
 } from '../../render/renderer';
-import { TriangleRenderer } from '../../render/triangle';
 import { RenderTarget } from '../../render/rendertarget';
 import { Size } from '../../types';
 import { BaseRendererOptions } from '../../render/base';
@@ -28,33 +21,58 @@ interface Props {
   name?: string;
   rendererConstructor: RendererConstructor;
   options?: CanvasViewOptions;
-  shader?: ShaderCode;
+  shaderCode?: ShaderCode;
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  name: undefined,
-  renderer: TriangleRenderer,
-  options: undefined,
-  shader: undefined,
-});
-defineEmits<{
-  'shader:compile:failed': [ShaderCode, Error];
-}>();
+const props = defineProps<Props>();
+// const props = withDefaults(defineProps<Props>(), {
+//   name: undefined,
+//   renderer: TriangleRenderer,
+//   options: undefined,
+//   shaderCode: () => ShaderCode.default(),
+// });
+console.log('initial', props);
 
 const canvasEl = ref<HTMLCanvasElement>();
 const context = ref<RendererContext>();
 const renderer = ref<Renderer>();
+const frame = ref<number>(0);
 let frameHandle: number = 0;
 let frameTime: number = 0;
-let rendererNeedsUpdate = true;
-let errored = false;
+let devicePromise: Promise<GPUDevice> = setupDevice();
 
 export interface SetupRenderingPipelineOptions {
   context: RendererContext;
   options?: CanvasViewOptions;
 }
+
+// watchEffect(async () => {
+//   if (canvasEl.value) {
+//     console.log('setup from watcheffect on canvasEl');
+//     const device = await devicePromise;
+//     context.value = await setupWebGpuContext(device, canvasEl.value);
+//   }
+// });
+
+watch(props, () => {
+  console.log('watchprops', props);
+});
+watch(
+  () => props.shaderCode,
+  async () => {
+    console.log('watchshaderCode', props);
+    console.log(
+      'RenderView: ShaderCode Prop changed',
+      props.shaderCode.userSource.length,
+    );
+    const device = await devicePromise;
+    renderer.value = await setupRenderingPipeline(device, props.shaderCode);
+  },
+);
+
 async function setupRenderingPipeline(
-  context: RendererContext,
+  device: GPUDevice,
+  shaderCode: ShaderCode,
   _options?: CanvasViewOptions,
 ) {
   const texture = await (async () => {
@@ -69,7 +87,7 @@ async function setupRenderingPipeline(
 
     const bitmap = await createImageBitmap(image);
     const bitmapSize = new Size(bitmap.width, bitmap.height);
-    const texture = context.device.createTexture({
+    const texture = device.createTexture({
       size: bitmapSize.as_array(true),
       // format: 'bgra8unorm' as GPUTextureFormat,
       format: 'rgba8unorm' as GPUTextureFormat,
@@ -78,7 +96,7 @@ async function setupRenderingPipeline(
         GPUTextureUsage.RENDER_ATTACHMENT |
         GPUTextureUsage.TEXTURE_BINDING,
     });
-    context.device.queue.copyExternalImageToTexture(
+    device.queue.copyExternalImageToTexture(
       { source: bitmap },
       { texture },
       bitmapSize.as_array(true),
@@ -87,26 +105,44 @@ async function setupRenderingPipeline(
   })();
 
   // Create Renderer.
-  return new props.rendererConstructor(context, {
+  return new props.rendererConstructor(device, {
     ...props.options,
     texture,
-    fragmentShader: props.shader,
-    vertexShader: props.shader,
+    fragmentShader: shaderCode,
+    vertexShader: shaderCode,
   });
 }
 
-async function setupWebGpu(canvas: Ref<HTMLCanvasElement | undefined>) {
-  if (!canvas.value) {
-    throw new Error('No canvas element.');
-  }
+/**
+ * If new canvas, then re-attach device. (Rendering pipeline shouldn't need update.
+ * If new code, then just replace rendering pipeline.
+ **/
+// async function setupWebGpuContext_TO_BE_REPLACED(
+//   canvas: Ref<HTMLCanvasElement | undefined>,
+// ) {
+//   if (!canvas.value) {
+//     throw new Error('No canvas element.');
+//   }
+//   context.value = await setupWebGpuContext(canvas.value);
+//   context.value = context.value || (await setupWebGpuContext(canvas.value));
+// }
+// async function setupRenderingPipeline_TO_BE_REPLACED() {
+//   if (!context.value) {
+//     throw new Error('No context element.');
+//   }
 
-  context.value = context.value || (await setupWebGpuContext(canvas.value));
-  renderer.value =
-    renderer.value ||
-    (await setupRenderingPipeline(context.value, props.options));
-}
+//   renderer.value =
+//     renderer.value ||
+//     (await setupRenderingPipeline(
+//       context.value,
+//       props.shaderCode,
+//       props.options,
+//     ));
+//   // console.log('new renderer', props.shaderCode.userSource.length);
+// }
 
 function resizeCanvasColorBuffer() {
+  console.log('resizing');
   // Resize backing colorbuffer if canvas size changed.
   if (!canvasEl.value) {
     throw new Error('No canvas element.');
@@ -126,58 +162,61 @@ function resizeCanvasColorBuffer() {
     canvasEl.value.height = scaledHeight;
   }
 }
-
+//return vec4f(1.0);
 async function startAnimationLoop() {
   let lastTime = performance.now();
   async function frameLoop(time: DOMHighResTimeStamp) {
-    if (
-      !errored &&
-      (rendererNeedsUpdate || !context.value || !renderer.value)
-    ) {
-      rendererNeedsUpdate = false;
-      await setupWebGpu(canvasEl);
-    }
-
     const deltaTime = time - lastTime;
     lastTime = time;
     frameTime += deltaTime;
 
-    if (!canvasEl.value) {
-      return;
-    }
+    // TODO:  Only re-create when needed.  This creates a new depth every frame.
+    // try {
+    if (context.value && renderer.value) {
+      const target = new RenderTarget(context.value, true);
+      renderer.value.update(frameTime, target);
+      renderer.value.renderFrame(target);
+      frame.value++;
+      // } catch (e) {
+      //   errored = true;
+      //   console.log(
+      //     `Error (${props.name}): Caught error trying to get rendertarget.`,
+      //     e,
+      //   );
 
-    // TODO: Only re-create when needed.  This creates a new depth every frame.
-    try {
-      const target = new RenderTarget(context.value!, true);
-
-      renderer.value!.update(frameTime, target);
-      renderer.value!.renderFrame(target);
-    } catch (e) {
-      errored = true;
-      console.log(
-        `Error (${props.name}): Caught error trying to get rendertarget.`,
-        e,
-      );
-      context.value = undefined;
+      //   context.value = undefined;
+      // }
+    } else {
+      console.log('Rendering not ready');
     }
     frameHandle = requestAnimationFrame(frameLoop);
+    // setTimeout(() => {
+    //   frameHandle = requestAnimationFrame(frameLoop);
+    // }, 1000);
   }
   frameHandle = requestAnimationFrame(frameLoop);
 }
+// onBeforeMount(async () => {
+//   console.log('beforemount');
+//   if (!device) {
+//     device = await setupDevice();
+//   }
+// });
 onMounted(async () => {
+  console.log('mounted', props);
+  if (canvasEl.value) {
+    console.log('setupfrom mounted');
+    console.log('shadercodename:', props.shaderCode?.name);
+    const device = await devicePromise;
+    context.value = await setupWebGpuContext(device, canvasEl.value);
+    renderer.value = await setupRenderingPipeline(device, props.shaderCode);
+  }
+  startAnimationLoop();
   resizeCanvasColorBuffer();
-  startAnimationLoop();
-});
-onUpdated(async () => {
-  rendererNeedsUpdate = true;
-  startAnimationLoop();
-});
-
-onBeforeUpdate(() => {
-  cancelAnimationFrame(frameHandle);
 });
 
 onBeforeUnmount(() => {
+  console.log('unmount');
   cancelAnimationFrame(frameHandle);
 });
 </script>
@@ -186,6 +225,7 @@ onBeforeUnmount(() => {
   <div class="canvas-container">
     <canvas ref="canvasEl" class="canvas" />
   </div>
+  <div class="counter">{{ frame }}</div>
 </template>
 
 <style scoped>
@@ -203,5 +243,13 @@ onBeforeUnmount(() => {
 
   /* height: 100%; */
   aspect-ratio: 1 / 1;
+}
+.counter {
+  position: absolute;
+  top: 0;
+  left: 0;
+  color: white;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 0.5em;
 }
 </style>

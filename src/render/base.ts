@@ -4,7 +4,6 @@
 
 import { ShaderCode, ShaderType } from '../shader';
 import type { Renderer } from './renderer';
-import { RendererContext } from './renderer';
 import { RenderTarget } from './rendertarget';
 
 const NUM_VERTICES = 4;
@@ -25,7 +24,7 @@ export class BaseRenderer implements Renderer {
   private uniformBindGroup: GPUBindGroup;
 
   constructor(
-    private renderContext: RendererContext,
+    private device: GPUDevice,
     private options: BaseRendererOptions = {},
   ) {
     this.pipeline = this._initPipeline(options);
@@ -44,8 +43,8 @@ export class BaseRenderer implements Renderer {
   }
 
   _initPipeline(options: BaseRendererOptions) {
-    const { device, presentationFormat } = this.renderContext;
-
+    // TODO: Make this a PArameter
+    const presentationFormat = navigator.gpu.getPreferredCanvasFormat();
     function getShaderSource(shader?: ShaderType): string {
       if (!shader) {
         return ShaderCode.default().source;
@@ -55,16 +54,27 @@ export class BaseRenderer implements Renderer {
       }
       return shader.source;
     }
-    const pipeline = device.createRenderPipeline({
+
+    const vertexShaderModule = this.device.createShaderModule({
+      code: getShaderSource(options.vertexShader),
+    });
+    vertexShaderModule.getCompilationInfo().then((info) => {
+      console.log('compilationInfo', info);
+    });
+    // const fragmentShaderModule = this.device.createShaderModule({
+    //   code: getShaderSource(options.vertexShader),
+    // });
+
+    const pipeline = this.device.createRenderPipeline({
       label: 'base-pipeline',
       layout: 'auto',
       vertex: {
-        module: device.createShaderModule({
+        module: this.device.createShaderModule({
           code: getShaderSource(options.vertexShader),
         }),
       },
       fragment: {
-        module: device.createShaderModule({
+        module: this.device.createShaderModule({
           code: getShaderSource(options.fragmentShader),
         }),
         targets: [
@@ -86,14 +96,13 @@ export class BaseRenderer implements Renderer {
    * Sets up uniforms for the renderer.
    */
   _initUniforms() {
-    const { device } = this.renderContext;
     const uniformBufferSize = 4 * (4 + 4); // Width, Height, Time, Color
-    const uniformBuffer = device.createBuffer({
+    const uniformBuffer = this.device.createBuffer({
       size: uniformBufferSize,
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
     });
 
-    const uniformBindGroup = device.createBindGroup({
+    const uniformBindGroup = this.device.createBindGroup({
       label: 'uniform-bindgroup',
       layout: this.pipeline.getBindGroupLayout(0),
       entries: [
@@ -113,7 +122,6 @@ export class BaseRenderer implements Renderer {
   }
 
   _updateUniforms(time: number, target: RenderTarget) {
-    const { device } = this.renderContext;
     const width = target.renderSize.width;
     const height = target.renderSize.height;
     const color = this.options.color || DEFAULT_COLOR;
@@ -124,7 +132,7 @@ export class BaseRenderer implements Renderer {
       color[0], color[1], color[2], color[3],
     ]);
 
-    device.queue.writeBuffer(
+    this.device.queue.writeBuffer(
       this.uniformBuffer,
       0,
       uniforms.buffer,
@@ -134,7 +142,6 @@ export class BaseRenderer implements Renderer {
   }
 
   _sendCommands(dstView: GPUTextureView) {
-    const { device } = this.renderContext;
     const renderPassDescriptor: GPURenderPassDescriptor = {
       colorAttachments: [
         {
@@ -147,14 +154,15 @@ export class BaseRenderer implements Renderer {
       ],
     };
 
-    const commandEncoder = this.renderContext.device.createCommandEncoder({
+    const commandEncoder = this.device.createCommandEncoder({
       label: 'base',
     });
-    const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
-    passEncoder.setPipeline(this.pipeline);
-    passEncoder.setBindGroup(0, this.uniformBindGroup);
-    passEncoder.draw(NUM_VERTICES);
-    passEncoder.end();
-    device.queue.submit([commandEncoder.finish()]);
+    const renderPassEncoder =
+      commandEncoder.beginRenderPass(renderPassDescriptor);
+    renderPassEncoder.setPipeline(this.pipeline);
+    renderPassEncoder.setBindGroup(0, this.uniformBindGroup);
+    renderPassEncoder.draw(NUM_VERTICES);
+    renderPassEncoder.end();
+    this.device.queue.submit([commandEncoder.finish()]);
   }
 }
