@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { onMounted } from 'vue';
 
-import CanvasView from './CanvasView.vue';
+// import CanvasView from './CanvasView.vue';
+import DemoView from './DemoView.vue';
 import { useRouter } from 'vue-router';
 import DEMOS from '../../render/demos.ts';
 
@@ -23,11 +24,11 @@ function goToShader(id?: string | number) {
 <template>
   <div class="main">
     <div class="canvases">
-      <CanvasView
+      <DemoView
         v-for="demo in DEMOS"
         :key="demo.name"
         :name="demo.name"
-        :renderer-constructor="demo.renderer"
+        :rendererConstructor="demo.renderer"
         :options="demo.options"
         :class="demo.id ? 'clickable' : undefined"
         @click="goToShader(demo.id)"

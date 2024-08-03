@@ -12,7 +12,6 @@ import roundedBox from './shaders/roundedBox.wgsl';
 import roundedTri from './shaders/roundedTri.wgsl';
 import tri from './shaders/tri.wgsl';
 
-export type ShaderType = ShaderCode | string;
 export class ShaderCode {
   private _source: string;
 

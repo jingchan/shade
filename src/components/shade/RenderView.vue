@@ -12,7 +12,7 @@ import { Size } from '../../types';
 import { BaseRendererOptions } from '../../render/base';
 import { ShaderCode } from '../../shader';
 
-export interface CanvasViewOptions extends Partial<BaseRendererOptions> {
+export interface RenderViewOptions extends Partial<BaseRendererOptions> {
   image?: string;
   scale?: number;
 }
@@ -20,17 +20,11 @@ export interface CanvasViewOptions extends Partial<BaseRendererOptions> {
 interface Props {
   name?: string;
   rendererConstructor: RendererConstructor;
-  options?: CanvasViewOptions;
-  shaderCode?: ShaderCode;
+  options?: RenderViewOptions;
+  shaderCode: ShaderCode;
 }
 
 const props = defineProps<Props>();
-// const props = withDefaults(defineProps<Props>(), {
-//   name: undefined,
-//   renderer: TriangleRenderer,
-//   options: undefined,
-//   shaderCode: () => ShaderCode.default(),
-// });
 console.log('initial', props);
 
 const canvasEl = ref<HTMLCanvasElement>();
@@ -43,20 +37,9 @@ let devicePromise: Promise<GPUDevice> = setupDevice();
 
 export interface SetupRenderingPipelineOptions {
   context: RendererContext;
-  options?: CanvasViewOptions;
+  options?: RenderViewOptions;
 }
 
-// watchEffect(async () => {
-//   if (canvasEl.value) {
-//     console.log('setup from watcheffect on canvasEl');
-//     const device = await devicePromise;
-//     context.value = await setupWebGpuContext(device, canvasEl.value);
-//   }
-// });
-
-watch(props, () => {
-  console.log('watchprops', props);
-});
 watch(
   () => props.shaderCode,
   async () => {
@@ -73,7 +56,7 @@ watch(
 async function setupRenderingPipeline(
   device: GPUDevice,
   shaderCode: ShaderCode,
-  _options?: CanvasViewOptions,
+  _options?: RenderViewOptions,
 ) {
   const texture = await (async () => {
     if (!props.options?.image) {
@@ -232,16 +215,14 @@ onBeforeUnmount(() => {
 .canvas-container {
   position: relative;
   width: 100%;
-  /* aspect-ratio: 1 / 1; */
   height: 100%;
-  /* width: 640px;
-  height: 480px; */
+  min-height: 3em;
+  aspect-ratio: 1 / 1;
 }
 .canvas {
   position: absolute;
   width: 100%;
-
-  /* height: 100%; */
+  height: 100%;
   aspect-ratio: 1 / 1;
 }
 .counter {

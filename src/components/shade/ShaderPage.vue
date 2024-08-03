@@ -91,12 +91,13 @@ function handlePointerDown(event: PointerEvent) {
 
 <template>
   <div ref="mainEl" class="main">
-    <div class="display" :style="{ width: `${splitRatio * 100}%` }">
-      <RenderView
-        :rendererConstructor="BaseRenderer"
-        :shaderCode="editedCode"
-      />
-      Hello From Shader PAge.
+    <div class="left" :style="{ width: `${splitRatio * 100}%` }">
+      <div class="preview">
+        <RenderView
+          :rendererConstructor="BaseRenderer"
+          :shaderCode="editedCode"
+        />
+      </div>
     </div>
     <div class="divider">
       <div
@@ -186,8 +187,10 @@ function handlePointerDown(event: PointerEvent) {
   box-shadow: 2px 2px 0 1px rgba(0, 0, 0, 0.1);
 }
 
-.display {
+.left {
   position: relative;
+}
+.preview {
 }
 .edit {
   flex-grow: 1;

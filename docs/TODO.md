@@ -1,12 +1,13 @@
 ##### P1
 
+- [ ] Saving shader code files.
+- [ ] Loading shader code files.
+- [ ] Finish transitioning to Renderer/ShaderModule/ShaderCode object models.
+  - [ ] Cleanup legacy codes afterwards.
 - [ ] Action model.
-- [ ] Perlin noise.
 - [ ] Varanoi noise.
 - [ ] Fire effect.
 - [ ] Circle on fire.
-- [ ] Sliders.
-- [x] Demo name/card.
 
 ##### P2
 
@@ -16,3 +17,7 @@
 ##### P3
 
 - [ ] Assess `animejs` library because `gsap` is not free for commercial use.
+
+##### Done
+
+- [x] Perlin noise.

@@ -2,7 +2,7 @@
  * Base Renderer class.
  */
 
-import { ShaderCode, ShaderType } from '../shader';
+import { ShaderCode } from '../shader';
 import type { Renderer } from './renderer';
 import { RenderTarget } from './rendertarget';
 
@@ -12,8 +12,8 @@ const DEFAULT_COLOR = [0.0, 0.4, 0.7, 0.4];
 
 export type ColorType = [number, number, number, number];
 export interface BaseRendererOptions {
-  vertexShader?: ShaderType;
-  fragmentShader?: ShaderType;
+  vertexShader?: ShaderCode;
+  fragmentShader?: ShaderCode;
   texture?: GPUTexture;
   color?: ColorType;
 }
