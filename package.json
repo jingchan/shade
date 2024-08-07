@@ -28,6 +28,7 @@
     "@vue/eslint-config-typescript": "^13.0.0",
     "@vue/tsconfig": "^0.5.1",
     "@webgpu/types": "^0.1.44",
+    "concurrently": "^8.2.2",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "9.1.0",
     "eslint-plugin-prettier": "5.2.1",
@@ -49,8 +50,5 @@
       "prettier --write --list-different",
       "eslint"
     ]
-  },
-  "dependencies": {
-    "concurrently": "^8.2.2"
   }
 }

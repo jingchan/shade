@@ -1,4 +1,4 @@
-import { initializeNewProject } from '../../../db/shader';
+import { initializeNewProject } from '@/db/project';
 import { NextResponse } from 'next/server';
 
 // /**
@@ -19,19 +19,11 @@ import { NextResponse } from 'next/server';
  */
 export async function POST(request: Request) {
   const requestJson = await request.json();
-  const { project_name, file_name, code } = requestJson;
-  const { project, file, version } = await initializeNewProject(
-    project_name,
-    file_name,
-    code,
-  );
+  const { name, description, code } = requestJson;
+  const resultRow = await initializeNewProject(name, description, code);
   // console.log(project, file, version);
-  console.log(project.id, file.id, version.id, version.code[0]);
-  return NextResponse.json({
-    project,
-    file,
-    version,
-  });
+  console.log(resultRow);
+  return NextResponse.json(resultRow);
 }
 
 // export async function PUT(request: Request) {

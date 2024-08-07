@@ -1,7 +1,7 @@
 import { type NextRequest } from 'next/server';
 import { intFromString } from '../../validation';
 import { respondWithError } from '../../errors';
-import { fetchProject } from '../../../../db/shader';
+import { getProject } from '@/db/project';
 
 // async function fetchProjectWithLatestFiles(id: number) {
 //   const project = await fetchProject(id);
@@ -19,9 +19,10 @@ export async function GET(
 ) {
   try {
     const id = intFromString(params.id);
-    console.log('fetching project with id', id);
-    const project = await fetchProject(id, { withFiles: true });
-    console.log('result', project);
+    console.log(id);
+
+    const project = await getProject(id);
+    console.log(project);
     return Response.json(project);
   } catch (error: unknown) {
     return respondWithError(error as Error);

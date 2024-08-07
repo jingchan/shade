@@ -9,6 +9,7 @@ import RenderView from './RenderView.vue';
 import clamp from '../../utils/clamp';
 import { MonacoEditor } from '../../edit/monaco';
 import router from '../../router';
+import { apiCreateProject, apiGetProject } from '../../clientApi/project';
 
 const emit = defineEmits<{
   contentChanged: [code: string];
@@ -16,7 +17,6 @@ const emit = defineEmits<{
 const mainEl = ref<HTMLElement | null>(null);
 const monacoEditor = shallowRef(new MonacoEditor());
 
-const API_URL = 'http://localhost:3001/api/project';
 const route = useRoute();
 route.params;
 
@@ -40,59 +40,60 @@ async function handleSaveButtonPressed() {
   console.log('Save button pressed');
   isEdited.value = false;
 
-  // If id is set, save
-  if (shader_id.value) {
-    const response = await fetch(API_URL + '/' + shader_id.value, {
-      method: 'PUT',
-      body: JSON.stringify({
-        code: currentCode.value?.userSource,
-      }),
-    });
-    const { rows } = await response.json();
-    console.log(rows);
-    return;
-  } else {
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      body: JSON.stringify({
-        project_name: 'New project',
-        file_name: 'main.wgsl',
-        code: currentCode.value?.userSource,
-      }),
-    });
-    console.log('post respose', response);
-    const { project, file, version } = await response.json();
-
-    console.log(project, file, version);
+  // If no id, create new, but otherwise, update.
+  console.log('shaderid', shader_id.value, typeof shader_id.value);
+  if (!shader_id.value) {
+    const project = await apiCreateProject(
+      'New project',
+      'My new shader project.',
+      currentCode.value?.userSource || '',
+    );
+    console.log(project);
 
     // const { id, name, code } = rows[0];
     console.log(`saved as ${project.id}`);
     router.replace(`/shader/${project.id}`);
+  } else {
+    throw new Error('Not implemented');
+
+    // const response = await fetch(API_URL + '/' + shader_id.value, {
+    //   method: 'PUT',
+    //   body: JSON.stringify({
+    //     code: currentCode.value?.userSource,
+    //   }),
+    // });
+    // const { rows } = await response.json();
+    // console.log(rows);
+    // return;
   }
 }
 
 onMounted(async () => {
   const id = shader_id.value;
   console.log('id is', id);
+  // If no id, load default otherwise load shader from server.
   if (!id) {
-    // If no id, load default starting template.
     initialCode.value = ShaderCode.default();
     return;
   } else {
     // Else, fetch shader code from server.
-    const response = await fetch(`${API_URL}/${id}`);
-    if (response.status === 200) {
-      const responseJson = await response.json();
-      console.log('fetched with:', responseJson);
-      // const data = response.json();
-      // return ShaderCode.default();
-      console.log('responseJson', responseJson);
-      if (responseJson.rows.length >= 1) {
-        initialCode.value = new ShaderCode(responseJson.rows[0].code);
-      }
-    }
-    notFound.value = true;
-    return;
+    const response = await apiGetProject(id);
+    console.log(response);
+    console.log(response.code);
+    initialCode.value = new ShaderCode(response.code);
+    // j;
+    // if (response.status === 200) {
+    //   const responseJson = await response.json();
+    //   console.log('fetched with:', responseJson);
+    //   // const data = response.json();
+    //   // return ShaderCode.default();
+    //   console.log('responseJson', responseJson);
+    //   if (responseJson.rows.length >= 1) {
+    //     initialCode.value = new ShaderCode(responseJson.rows[0].code);
+    //   }
+    // }
+    // notFound.value = true;
+    // return;
   }
 });
 
@@ -195,7 +196,7 @@ function handlePointerDown(event: PointerEvent) {
         <button
           type="button"
           class="btn"
-          :disabled="!isEdited"
+          :disabled="false && !isEdited"
           @click="handleSaveButtonPressed"
         >
           Save

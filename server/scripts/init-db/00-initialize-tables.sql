@@ -23,16 +23,17 @@ CREATE TABLE Project (
   owner_id INT REFERENCES Account (id) ON DELETE SET NULL,
   name VARCHAR(255) NOT NULL,
   description TEXT,
+  code TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table to store shader files within a project
-CREATE TABLE ProjectFile (
-  id SERIAL PRIMARY KEY,
-  project_id INT REFERENCES Project (id) ON DELETE CASCADE,
-  name VARCHAR(255) NOT NULL,
-  content TEXT NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
+-- -- Table to store shader files within a project
+-- CREATE TABLE ProjectFile (
+--   id SERIAL PRIMARY KEY,
+--   project_id INT REFERENCES Project (id) ON DELETE CASCADE,
+--   name VARCHAR(255) NOT NULL,
+--   content TEXT NOT NULL,
+--   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+--   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+-- );

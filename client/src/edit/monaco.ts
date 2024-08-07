@@ -25,7 +25,8 @@ export class MonacoEditor {
         enabled: false,
       },
       padding: {
-        top: 24,
+        // Don't need padding after adding save button toolbar.
+        // top: 24,
         bottom: 24 * 4,
       },
       scrollBeyondLastLine: false,

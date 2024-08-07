@@ -100,17 +100,42 @@
 // }
 
 // export async function initializeNewProject(
-//   project_name: string,
-//   file_name: string,
+//   name: string,
+//   description: string,
 //   code: string,
 // ) {
 //   const project = await createProject(project_name);
 //   const file = await createProjectFile(project.id, file_name);
 //   const version = await createProjectFileVersion(file.id, code);
+//   const { rows } = await pool.query(
+//     `
+//     INSERT INTO Project (name, traits, interests, profession, speech_style)
+//     VALUES ($1, $2, $3, $4, $5)
+//     RETURNING *
+//     `,
+//     [name, traits, interests, profession, speech_style],
+//   );
 
 //   return {
 //     project,
 //     file,
 //     version,
 //   };
+// }
+
+// export async function POST(request: Request) {
+//   const { name, traits, interests, profession, speech_style } =
+//     await request.json();
+//   const { rows } = await pool.query(
+//     `
+//     INSERT INTO Agent (name, traits, interests, profession, speech_style)
+//     VALUES ($1, $2, $3, $4, $5)
+//     RETURNING *
+//     `,
+//     [name, traits, interests, profession, speech_style]
+//   );
+
+//   return Response.json({
+//     rows,
+//   });
 // }
