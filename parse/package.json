@@ -1,0 +1,17 @@
+{
+  "name": "parse",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "pnpm run build && nearley-test -i test.txt dist/parse.js",
+    "unparse": "pnpm run build && nearley-unparse -n 10 dist/parse.js",
+    "build": "nearleyc grammar.ne -o dist/parse.js"
+  },
+  "keywords": [ ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "nearley": "^2.20.1"
+  }
+}
