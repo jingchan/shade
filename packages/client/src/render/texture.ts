@@ -1,7 +1,7 @@
 /**
  * Renders a texture to a quad.
  */
-import { ShaderCode } from '../shader';
+import { ShaderCode } from '../shader/shaderCode';
 import TextureWsgl from '../shaders/texture.wgsl';
 import { BaseRendererOptions } from './base';
 import {

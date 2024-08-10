@@ -10,7 +10,7 @@ import {
 import { RenderTarget } from '../../render/rendertarget';
 import { Size } from '../../types';
 import { BaseRendererOptions } from '../../render/base';
-import { ShaderCode } from '../../shader';
+import { ShaderCode } from '../../shader/shaderCode';
 
 export interface RenderViewOptions extends Partial<BaseRendererOptions> {
   image?: string;

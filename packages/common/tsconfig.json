@@ -1,6 +1,21 @@
 {
-  "extends": "../../tsconfig.json",
   "compilerOptions": {
+    "target": "ES2021",
+    "module": "ESNext",
+    "lib": ["DOM", "DOM.Iterable", "ES2021"],
+    "strict": true,
+    "skipLibCheck": true,
+    "moduleDetection": "force",
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "bundler",
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "allowImportingTsExtensions": true,
+    "noUnusedLocals": true,
+    "useDefineForClassFields": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noEmit": true,
     "composite": true,
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
     "paths": {

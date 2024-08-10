@@ -4,7 +4,7 @@
 import CommonWgsl from '../shaders/common.wgsl';
 import base from '../shaders/base.wgsl';
 
-class ShaderCode {
+export class ShaderCode {
   constructor(
     public userSource: string,
     public name?: string,

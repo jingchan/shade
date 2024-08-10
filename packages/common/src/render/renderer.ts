@@ -1,5 +1,5 @@
 import { ShaderCode } from '../shader/shaderCode';
-import { ShaderModule } from '../shader/shaderModule';
+import { ShaderModule } from './shaderModule';
 import { Size } from '../types';
 import { RenderPipeline } from './pipeline';
 import { RenderTarget } from './rendertarget';
@@ -40,6 +40,25 @@ export async function setupDevice() {
     throw new WebGpuNotSupportedError('Could not request device.');
   }
   return device;
+}
+
+export function getWebGpuContextAndAttachDevice(
+  canvas: HTMLCanvasElement,
+  device: GPUDevice,
+): GPUCanvasContext {
+  const context = canvas.getContext('webgpu');
+  if (!context) {
+    throw new WebGpuNotSupportedError('Could not get webgpu context.');
+  }
+
+  const presentationFormat = navigator.gpu.getPreferredCanvasFormat();
+  context.configure({
+    device,
+    format: presentationFormat,
+    alphaMode: 'premultiplied' as GPUCanvasAlphaMode,
+  } as GPUCanvasConfiguration);
+
+  return context;
 }
 
 export async function setupWebGpuContext(

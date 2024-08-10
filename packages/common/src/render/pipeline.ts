@@ -1,4 +1,4 @@
-import { ShaderModule } from '../shader/shaderModule';
+import { ShaderModule } from '../shader';
 import { RenderTarget } from './rendertarget';
 
 const NUM_VERTICES = 4;

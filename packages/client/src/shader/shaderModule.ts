@@ -1,3 +1,5 @@
+import ShaderCode from './shaderCode';
+
 /**
  * Represents a shader that can be used in creating a rendering pipeline.
  * Couled to GPUDevice.
