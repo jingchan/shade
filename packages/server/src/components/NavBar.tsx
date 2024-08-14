@@ -1,11 +1,10 @@
-'use client';
-
 import DiscordButton from './buttons/discord';
 import GitHubButton from './buttons/github';
 import ToggleDarkButton from './buttons/ToggleDarkButton';
 import TwitterButton from './buttons/twitter';
 import YoutubeButton from './buttons/youtube';
 import SearchBar from './SearchBar';
+import NavAuthWidget from './NavAuthWidget';
 
 const links = [
   { name: 'Main', path: '/' },
@@ -14,7 +13,7 @@ const links = [
   { name: 'Shaders', path: '/shade' },
 ];
 
-export default function NavBar() {
+export default async function NavBar() {
   return (
     <div
       className={
@@ -26,7 +25,7 @@ export default function NavBar() {
           className="underline hover:text-black dark:hover:text-gray-200"
           href="/"
         >
-          Shadr
+          Shadrs.com
         </a>
       </div>
       <SearchBar />
@@ -48,12 +47,7 @@ export default function NavBar() {
         <YoutubeButton href="" />
         <TwitterButton href="" />
         <ToggleDarkButton />
-        <a
-          href="/login"
-          className="xl:inline-flex items-center text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center ml-1 sm:ml-3"
-        >
-          Get Started
-        </a>
+        <NavAuthWidget />
       </div>
     </div>
   );

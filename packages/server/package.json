@@ -3,18 +3,23 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --port 3001",
+    "dev": "pnpm run build:worker && next dev --port 3001",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "vitest"
+    "test": "vitest",
+    "build:worker": "webpack build --entry monaco-editor/esm/vs/editor/editor.worker.js --output-path public --output-filename w.js --mode=production"
   },
   "dependencies": {
     "@vercel/postgres": "^0.9.0",
+    "iron-session": "^8.0.2",
+    "monaco-editor": "^0.50.0",
+    "monaco-editor-webpack-plugin": "^7.1.0",
     "next": "14.2.5",
     "pg": "^8.12.0",
     "react": "^18",
     "react-dom": "^18",
+    "react-monaco-editor": "^0.56.0",
     "shade-common": "workspace:*"
   },
   "devDependencies": {
@@ -22,10 +27,16 @@
     "@types/pg": "^8.11.6",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@webpack-cli/generators": "^3.0.7",
+    "css-loader": "^7.1.2",
     "eslint": "^8",
     "eslint-config-next": "14.2.5",
-    "typescript": "^5",
+    "file-loader": "^6.2.0",
     "postcss": "^8",
-    "tailwindcss": "^3.4.1"
+    "style-loader": "^4.0.0",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5",
+    "webpack": "^5.93.0",
+    "webpack-cli": "^5.1.4"
   }
 }

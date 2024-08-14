@@ -1,11 +1,38 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { User } from 'shade-common';
 
 const API_URL = 'http://localhost:3001/api';
 
 function useAuthApi() {
-  const [loggedInUser, setLoggedInUser] = useState(null);
+  const [loggedInUser, setLoggedInUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<unknown>(null);
+
+  // Function to check session
+  const checkSession = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/auth/session`, {
+        method: 'GET',
+        credentials: 'include', // Important for cookies to be sent and received
+      });
+      if (!response.ok) throw new Error('Session check failed');
+      const data = await response.json();
+      setLoggedInUser(data.user);
+    } catch (err) {
+      setError(err);
+      setLoggedInUser(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Call checkSession when the component mounts
+  useEffect(() => {
+    (async () => {
+      return await checkSession();
+    })();
+  }, []);
 
   const signup = async (username: string, email: string, password: string) => {
     setIsLoading(true);
@@ -34,8 +61,12 @@ function useAuthApi() {
         body: JSON.stringify({ username: username_or_email, password }),
       });
       if (!response.ok) throw new Error('Failed to login');
-      const user = await response.json();
-      setLoggedInUser(user);
+      const res = await response.json();
+      if (res.user) {
+        setLoggedInUser(res.user);
+      } else {
+        setError(res.error);
+      }
     } catch (err) {
       setError(err);
     } finally {

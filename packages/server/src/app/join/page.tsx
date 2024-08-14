@@ -48,7 +48,7 @@ export default function JoinPage() {
           </label>
         </div>
         <div>
-          <button className="btn btn-lg w-full" type="submit">
+          <button className="btn lg w-full" type="submit">
             Next
           </button>
           <p className="mb-1 mt-4 text-center text-sm text-gray-800">

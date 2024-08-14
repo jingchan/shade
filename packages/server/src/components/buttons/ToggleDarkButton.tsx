@@ -1,3 +1,4 @@
+'use client';
 import { PropsWithChildren } from 'react';
 
 export default function ToggleDarkButton(_props: PropsWithChildren) {

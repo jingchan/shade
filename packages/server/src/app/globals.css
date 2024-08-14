@@ -17,22 +17,35 @@
     @apply focus:ring-4 focus:ring-blue-200/50 focus:border-blue-300 outline-none;
   }
   .btn {
-    @apply select-none cursor-pointer font-medium rounded-lg inline-flex items-center justify-center;
-    @apply text-gray-800 border border-gray-200 bg-gradient-to-b from-white to-gray-100;
-    @apply hover:shadow-inner active:shadow-gray-300/50;
+    @apply select-none cursor-pointer inline-flex items-center justify-center;
+    @apply px-2 py-1 text-xs;
     @apply focus:ring-4 focus:ring-blue-200/50 focus:border-blue-300 outline-none;
+    @apply hover:shadow-inner active:shadow-gray-300/50;
   }
-  .btn.btn-lg {
-    @apply px-4 py-2 font-normal;
+  .btn.lg {
+    @apply px-4 py-2 font-normal rounded-lg;
+    @apply hover:shadow-inner active:shadow-gray-300/50;
+    @apply text-gray-800 border border-gray-200 bg-gradient-to-b from-white to-gray-100;
+  }
+  .btn.sm {
+    @apply px-2 py-1 text-xs;
+    @apply bg-gray-500 text-white hover:bg-gray-600 rounded-md;
+  }
+  .btn.green {
+    @apply bg-green-500 text-white hover:bg-green-600 disabled:bg-gray-500;
+  }
+  .devinfo {
+    @apply text-gray-300 bg-black/20;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
   }
 }
 
 html {
-  min-height: 100%;
+  height: 100%;
 }
 body {
   @apply bg-pink-100 bg-gradient-to-b from-indigo-100/20 to-indigo-100;
-  min-height: 100%;
+  height: 100%;
 }
 
 @layer utilities {

@@ -1,14 +1,15 @@
+'use client';
 import { useContext } from 'react';
 import RenderView from './RenderView';
-import { RenderContext } from '@/app/providers/RenderContext';
+import { RenderingContext } from '@/components/providers/RenderingContext';
 
 export default function ShaderThumb() {
-  const device = useContext(RenderContext);
+  const device = useContext(RenderingContext);
 
   return (
     <div className="xd">
       <div className="title">name</div>
-      <RenderView device={device} />
+      {device && <RenderView device={device} renderPipeline={null} />}
     </div>
   );
 }

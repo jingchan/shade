@@ -1,7 +1,40 @@
+'use client';
+
+import useAuthApi from '@/useAuthApi';
+import { useRouter } from 'next/navigation';
+import { FormEvent, useEffect } from 'react';
+
 export default function LoginPage() {
+  const { loggedInUser, isLoading, error, login } = useAuthApi();
+  const router = useRouter();
+
+  async function handleLogin(ev: FormEvent<HTMLFormElement>) {
+    ev.preventDefault();
+
+    const formData = new FormData(ev.currentTarget);
+    const username = formData.get('username');
+    const password = formData.get('password');
+    if (typeof username !== 'string' || typeof password !== 'string') {
+      return;
+    }
+    await login(username, password);
+  }
+
+  useEffect(() => {
+    if (loggedInUser) {
+      console.log(loggedInUser);
+      router.push('/');
+    }
+  }, [loggedInUser]);
   return (
     <section className="pt-24 border-gray-100 col-span-full flex-1 pb-16 md:pb-0 px-6">
-      <form className="mx-auto rounded-2xl border bg-white p-4 shadow md:w-96 md:px-5">
+      {loggedInUser?.username + '\n'}
+      {isLoading + '\n'}
+      {error + '\n'}
+      <form
+        className="mx-auto rounded-2xl border bg-white p-4 shadow md:w-96 md:px-5"
+        onSubmit={handleLogin}
+      >
         <img
           alt="Logo here"
           className="mx-auto -mt-12 mb-2 w-20 h-20 bg-purple-500"
@@ -54,7 +87,7 @@ export default function LoginPage() {
           </label>
         </div>
         <div>
-          <button className="btn btn-lg w-full" type="submit">
+          <button className="btn lg w-full" type="submit">
             Login
           </button>
           <p className="mb-1 mt-4 text-center text-sm text-gray-800">

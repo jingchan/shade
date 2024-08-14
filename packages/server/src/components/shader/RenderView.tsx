@@ -1,87 +1,90 @@
 'use client';
 
 import { FpsReporter } from '@/play/fpsReporter';
-import { Looper, RequestAnimationFrameLooper } from '@/play/loop';
+import { RequestAnimationFrameLooper } from '@/play/loop';
 import { useEffect, useRef, useState } from 'react';
-import { getWebGpuContextAndAttachDevice } from 'shade-common';
+import {
+  getWebGpuContextAndAttachDevice,
+  RenderPipeline,
+  RenderTarget,
+  ShaderModule,
+} from 'shade-common';
+import ShaderCode from 'shade-common/src/shader/shaderCode';
 
 interface RenderViewProps {
-  shader_id?: number;
-  device: GPUDevice | null;
+  shader_code: ShaderCode;
+  device: GPUDevice;
   showStats?: boolean;
 }
 
-// /**
-//  * Utility function that will call the provided function at a fixed interval.
-//  */
-// function renderLoop(loop_fn: (time: number) => void, interval?: number) {
-//   let frameHandle: number;
-//   let timeoutHandle: number;
-//   let frameTime = 0.0;
-
-//   let lastTime = performance.now();
-//   async function frame(time: DOMHighResTimeStamp) {
-//     const deltaTime = time - lastTime;
-//     lastTime = time;
-//     frameTime += deltaTime;
-
-//     loop_fn(frameTime);
-
-//     if (interval) {
-//       timeoutHandle = window.setTimeout(() => {
-//         frameHandle = requestAnimationFrame(frame);
-//       }, 1000);
-//     } else {
-//       frameHandle = requestAnimationFrame(frame);
-//     }
-//   }
-//   frameHandle = requestAnimationFrame(frame);
-
-//   return () => {
-//     console.log('cleanup');
-//     clearTimeout(timeoutHandle);
-//     cancelAnimationFrame(frameHandle);
-//   };
-// }
-
 // TODO: Resize canvas buffer to match canvas size.
-export default function RenderView(props: RenderViewProps) {
+export default function RenderView({
+  shader_code,
+  device,
+  showStats = true,
+}: RenderViewProps) {
   const [fps, setFps] = useState<number | null>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
-  const canvasContext = useRef<GPUCanvasContext | null>(null);
+  const canvasContext = useRef<GPUCanvasContext>();
   const reporter = useRef<FpsReporter>(new FpsReporter(setFps));
-  const looper = useRef<Looper>(new RequestAnimationFrameLooper(mainLoop));
+  // const looper = useRef<Looper>(new RequestAnimationFrameLooper(mainLoop));
+  const [pipeline, setPipeline] = useState<RenderPipeline | null>(null);
 
-  function mainLoop(_time: number, _frame: number) {
-    if (!canvasContext.current) {
+  // function mainLoop(time: number, frame: number) {
+  //   if (!canvasContext.current) {
+  //     return;
+  //   }
+  //   if (pipeline) {
+  //     const { uniformBuffer, uniformBindGroup } = pipeline.createUniforms();
+  //     const target = new RenderTarget(device, canvasContext.current);
+
+  //     pipeline.draw(time, target, uniformBuffer, [uniformBindGroup]);
+  //   }
+
+  //   reporter.current.tick();
+  // }
+
+  useEffect(() => {
+    console.log('pipeline effect', pipeline, canvasContext);
+    const context = canvasContext.current;
+    if (!pipeline || !context) {
       return;
     }
-    // TODO: Call Rendering
 
-    reporter.current.tick();
-  }
-
-  useEffect(() => {
-    looper.current.start();
+    const looper = new RequestAnimationFrameLooper((time, _frame) => {
+      const { uniformBuffer, uniformBindGroup } = pipeline.createUniforms();
+      const target = new RenderTarget(device, context);
+      pipeline.draw(time, target, uniformBuffer, [uniformBindGroup]);
+      reporter.current.tick();
+    });
+    looper.start();
     return () => {
-      looper.current?.stop();
+      looper.stop();
     };
-  }, []);
+  }, [canvasContext, pipeline]);
 
   useEffect(() => {
-    const device = props.device;
+    if (!shader_code) {
+      return;
+    }
+    const shader = new ShaderModule(device, shader_code);
+    RenderPipeline.build(device, shader, shader).then(setPipeline);
+  }, [shader_code]);
+
+  useEffect(() => {
     const canvasEl = canvas.current;
-    if (!device || !canvasEl) {
+    if (!canvasEl) {
       return;
     }
     canvasContext.current = getWebGpuContextAndAttachDevice(canvasEl, device);
-  }, [canvas, props.device]);
+  }, []);
 
   return (
     <div className="relative aspect-square">
       <canvas ref={canvas} className="bg-orange-50 w-full h-full" />
-      {props.showStats && (
-        <div className="absolute top-0 bg-[#0003]">
+      {showStats && (
+        // <div className="absolute top-0 text-gray-400 shadow-sm">
+        <div className={'devinfo absolute bottom-0 right-0 shadow px-1 '}>
           <div className="">fps: {fps?.toFixed(1)}</div>
         </div>
       )}

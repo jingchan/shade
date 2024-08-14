@@ -1,6 +1,6 @@
 import pool from '@/db/pool';
 import { NextResponse } from 'next/server';
-import { respondWithError, SignInError } from '../../errors';
+import { respondWithError, LoginError } from '../../errors';
 
 /**
  * POST /auth/logout
@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     return respondWithError(new Error('Missing username or email'));
   }
   if (!password) {
-    return respondWithError(new SignInError('Missing password'));
+    return respondWithError(new LoginError('Missing password'));
   }
 
   try {
@@ -26,7 +26,7 @@ export async function POST(request: Request) {
       [username, password],
     );
     if (!rows.length) {
-      throw new SignInError('Invalid user/password.');
+      throw new LoginError('Invalid user/password.');
     }
     return NextResponse.json(rows[0]);
   } catch (error) {

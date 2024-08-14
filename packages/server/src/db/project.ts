@@ -1,5 +1,33 @@
-import { NoProjectError } from '@/app/api/errors';
 import pool from '@/db/pool';
+
+export async function createProjectForUser(
+  user_id: number,
+  name: string,
+  description: string,
+  code: string,
+) {
+  const { rows } = await pool.query(
+    `
+    INSERT INTO Project (owner_id, name, description, code)
+    VALUES ($1, $2, $3, $4)
+    RETURNING *
+    `,
+    [user_id, name, description, code],
+  );
+  return rows[0];
+}
+
+export async function getProjectsForUser(user_id: number) {
+  const { rows } = await pool.query(
+    `
+    SELECT *
+    FROM Project
+    WHERE owner_id=$1
+    `,
+    [user_id],
+  );
+  return rows;
+}
 
 export async function getProject(id: number) {
   const { rows } = await pool.query(
@@ -10,10 +38,6 @@ export async function getProject(id: number) {
     `,
     [id],
   );
-  if (!rows.length) {
-    throw new NoProjectError(`No project.`);
-  }
-  console.log('rows', rows);
   return rows[0];
 }
 
@@ -30,9 +54,6 @@ export async function createProject(
     `,
     [name, description, code],
   );
-  if (!rows.length) {
-    throw new NoProjectError(`Unable to create a new project.`);
-  }
   return rows[0];
 }
 
@@ -49,8 +70,5 @@ export async function updateProject(
     `,
     [name, description, code],
   );
-  if (!rows.length) {
-    throw new NoProjectError(`Unable to create a new project.`);
-  }
   return rows[0];
 }

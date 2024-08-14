@@ -1,14 +1,17 @@
 import pool from '@/db/pool';
-import { NextResponse } from 'next/server';
 import { respondWithError, LoginError } from '../../errors';
 import { generateSessionToken } from '../generateSessionToken';
+import { getSession, logout } from '@/actions/session';
 
-const SESSION_COOKIE_KEY = 's';
+const InvalidCredentialsResponse = {
+  error: 'Invalid username or password.',
+};
 
 /**
  * POST /auth/login
  */
 export async function POST(request: Request) {
+  logout();
   const requestJson = await request.json();
   const { username, password } = requestJson;
 
@@ -23,48 +26,50 @@ export async function POST(request: Request) {
     await pool.query('BEGIN');
     const userResult = await pool.query(
       `
-      SELECT * FROM Account
+      SELECT id, username, email FROM Account
       WHERE (username=$1 OR email=$1) AND password_hash=$2
-      RETURNING id, username, email
       `,
       [username, password],
     );
     if (!userResult.rows.length) {
-      throw new LoginError('Invalid user/password.');
+      return Response.json(InvalidCredentialsResponse, { status: 200 });
     }
 
+    const user = userResult.rows[0];
     const sessionToken = generateSessionToken();
+    const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 30); // 30 days
+
     const sessionResult = await pool.query(
       `
-      INSERT INTO Sessions (user_id, token)
-      VALUES ($1, $2)
+      INSERT INTO Sessions (user_id, token, expires_at)
+      VALUES ($1, $2, $3)
       RETURNING id;
       `,
-      [userResult.rows[0].id, sessionToken],
+      [user.id, sessionToken, expiresAt],
     );
     if (!sessionResult.rows.length) {
       throw new LoginError('Failed to create session');
     }
-
     await pool.query('COMMIT');
 
-    // res.writeHead(200, {
-    //   'Content-Type': 'text/plain',
-    //   'Set-Cookie': `sessionId=${sessionId}; HttpOnly; Path=/; SameSite=Strict`,
-    // });
+    const session = await getSession();
+    session.user = user;
+    await session.save();
+    console.log('Session createdfor:', user, session);
 
-    // const sessionvalue =
-    const response = NextResponse.next();
-    response.headers.set(
-      'Set-Cookie',
-      `${SESSION_COOKIE_KEY}=${sessionToken}; HttpOnly; Path=/; SameSite=Strict`,
+    return Response.json(
+      {
+        user,
+      },
+      // {
+      //   headers: [
+      //     [
+      //       'Set-Cookie',
+      //       `${SESSION_COOKIE_KEY}=${sessionToken}; HttpOnly; Path=/; SameSite=Strict`,
+      //     ],
+      //   ],
+      // },
     );
-    response.json();
-    return NextResponse.json({
-      id: userResult.rows[0].id,
-      username: userResult.rows[0].username,
-      email: userResult.rows[0].email,
-    });
   } catch (error) {
     await pool.query('ROLLBACK'); // Roll back the transaction on error
     console.log('Login error: ', error);
