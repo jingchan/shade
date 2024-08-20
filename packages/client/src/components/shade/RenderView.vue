@@ -19,7 +19,7 @@ export interface RenderViewOptions extends Partial<BaseRendererOptions> {
 
 interface RenderViewProps {
   rendererConstructor: RendererConstructor;
-  shaderCode: ShaderCode;
+  shaderCode?: ShaderCode;
   name?: string;
   options?: RenderViewOptions;
 }
@@ -38,11 +38,9 @@ export interface SetupRenderingPipelineOptions {
   context: RendererContext;
   options?: RenderViewOptions;
 }
-
 watch(
   () => props.shaderCode,
   async () => {
-    console.log('watchshaderCode', props);
     console.log('RenderView: ShaderCode Prop changed', props.shaderCode);
     const device = await devicePromise;
     renderer.value = await setupRenderingPipeline(device, props.shaderCode);

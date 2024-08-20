@@ -10,7 +10,8 @@ const routes = [
   { path: '/', component: DemoPage },
   { path: '/card', component: CardPage },
   { path: '/demos', component: DemoPage },
-  { path: '/shader/:id?', component: ShaderPage },
+  { path: '/shader/:id(\\d+)?', component: ShaderPage, props: true },
+
   { path: '/:pathMatch(.*)*', name: 'NotFound', component: NotFound },
 ];
 

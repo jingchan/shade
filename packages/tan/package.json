@@ -1,0 +1,52 @@
+{
+  "name": "shade-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && tsc -b",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "test": "vitest",
+    "build:worker": "webpack build --entry monaco-editor/esm/vs/editor/editor.worker.js --output-path public --output-filename w.js --mode=production"
+  },
+  "dependencies": {
+    "@tanstack/react-router": "^1.47.5",
+    "@vitejs/plugin-react": "^4.3.1",
+    "iron-session": "^8.0.2",
+    "monaco-editor": "^0.50.0",
+    "next": "14.2.5",
+    "pg": "^8.12.0",
+    "react": "^18",
+    "react-dom": "^18",
+    "react-monaco-editor": "^0.56.0",
+    "shade-common": "workspace:*",
+    "swr": "^2.2.5",
+    "zustand": "^4.5.4"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.9.0",
+    "@tanstack/router-devtools": "^1.47.5",
+    "@tanstack/router-plugin": "^1.47.0",
+    "@types/node": "^20",
+    "@types/pg": "^8.11.6",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.4.19",
+    "eslint": "^9.9.0",
+    "eslint-plugin-react-hooks": "^5.1.0-rc.0",
+    "eslint-plugin-react-refresh": "^0.4.9",
+    "globals": "^15.9.0",
+    "postcss": "^8.4.41",
+    "tailwindcss": "^3.4.9",
+    "typescript": "^5.5.3",
+    "typescript-eslint": "^8.0.1",
+    "vite": "^5.4.0",
+    "vite-plugin-glsl": "^1.3.0",
+    "vite-svg-loader": "^5.1.0",
+    "vite-tsconfig-paths": "^5.0.1",
+    "vitest": "^2.0.3"
+  }
+}

@@ -30,7 +30,7 @@ class WebGpuNotSupportedError extends Error {
   }
 }
 
-export async function setupDevice() {
+export async function requestDeviceFromBrowser() {
   const adapter = await navigator.gpu.requestAdapter();
   if (!adapter) {
     throw new WebGpuNotSupportedError('Could not request adapter.');

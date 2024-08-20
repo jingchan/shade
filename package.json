@@ -7,10 +7,6 @@
   "license": "ISC",
   "keywords": [ ],
   "private": true,
-  "workspaces": [
-    "client",
-    "server"
-  ],
   "scripts": {
     "dev:client": "cd packages/client && pnpm run dev",
     "dev:server": "cd packages/server && pnpm run dev",

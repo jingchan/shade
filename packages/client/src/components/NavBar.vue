@@ -1,39 +1,52 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router';
-import AuthFormModal from './AuthFormModal.vue';
-import { ref } from 'vue';
-import useAuthApi from '../clientApi/useAuthApi.ts';
+import SearchBar from './SearchBar.vue';
 
 defineProps<{
   links: { name: string; path: string }[];
 }>();
-const showAuth = ref(false);
-
-const { loggedInUser, login, signup, logout } = useAuthApi();
-
-async function handleLogin(username: string, password: string) {
-  login(username, password);
-}
-
-async function handleSignup(username: string, email: string, password: string) {
-  signup(username, email, password);
-}
 </script>
 
 <template>
-  <div class="nav">
-    <RouterLink
-      v-for="link in links"
-      :key="link.name"
-      class="nav-link"
-      activeClass="active"
-      :to="link.path"
-      @dragstart.prevent
-    >
-      {{ link.name }}
-    </RouterLink>
+  <div
+    class="flex items-center justify-between w-full px-3 py-3 mx-auto max-w-8xl lg:px-4"
+  >
+    <div class="flex items-center">
+      <a class="underline hover:text-black dark:hover:text-gray-200" href="/">
+        Shadrs.com
+      </a>
+    </div>
+    <SearchBar />
+
+    <div class="flex items-center">
+      <ul
+        class="flex-col hidden pt-6 lg:flex-row lg:self-center lg:py-0 lg:flex"
+      >
+        <li
+          v-for="link in links"
+          :key="link.name"
+          class="mb-3 lg:px-2 xl:px-2 lg:mb-0"
+        >
+          <RouterLink
+            class="text-sm font-medium text-gray-900 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-500"
+            activeClass="active"
+            :to="link.path"
+            @dragstart.prevent
+          >
+            {{ link.name }}
+          </RouterLink>
+        </li>
+      </ul>
+      <!-- <GitHubButton href="" />
+      <DiscordButton href="" />
+      <YoutubeButton href="" />
+      <TwitterButton href="" />
+      <ToggleDarkButton />
+      <NavAuthWidget /> -->
+    </div>
   </div>
-  <div>
+
+  <!-- <div>
     <div v-if="loggedInUser">
       Logged in as {{ loggedInUser.username }}
       <button type="button" @click="logout">Logout</button>
@@ -48,7 +61,7 @@ async function handleSignup(username: string, email: string, password: string) {
       @login="handleLogin"
       @signup="handleSignup"
     />
-  </Teleport>
+  </Teleport> -->
 </template>
 
 <style scoped>

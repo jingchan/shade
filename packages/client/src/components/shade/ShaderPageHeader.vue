@@ -1,78 +1,62 @@
 <script setup lang="ts">
-import { ref, watchEffect } from 'vue';
-import { Project } from 'shade-common';
+import { ref, watch } from 'vue';
+import { ProjectData } from 'shade-common';
 
 const props = defineProps<{
-  project?: Project;
+  project?: ProjectData;
 }>();
 const emit = defineEmits<{
   nameChanged: [newName: string];
 }>();
-const nameEl = ref<HTMLElement>();
-const nameModel = ref<string>();
+const formEl = ref<HTMLFormElement>();
+const nameEl = ref<HTMLInputElement>();
+const editedNameModel = ref<string>();
 
-watchEffect(() => {
-  resetName();
-});
+watch(
+  () => props.project,
+  () => {
+    resetName();
+  },
+  { immediate: true },
+);
 
 function resetName() {
-  nameModel.value = props.project?.name;
+  editedNameModel.value = props.project?.name;
 }
 
-function updateName() {
-  if (nameModel?.value) {
-    emit('nameChanged', nameModel.value);
-  } else {
-    resetName();
+function doNameChange() {
+  if (editedNameModel.value !== props.project?.name) {
+    emit('nameChanged', editedNameModel.value);
   }
 }
 
-function handleKeyPress(event: KeyboardEvent) {
-  switch (event.code) {
-    case 'Enter':
-      nameEl.value?.blur();
-      break;
-    case 'Space':
-      break;
-  }
+function handleFocusOut(_event: FocusEvent) {
+  doNameChange();
 }
 
-function handleFocusOut(_event: Event) {
-  updateName();
+function handleSubmit(event?: Event) {
+  event.preventDefault();
+
+  // Note that calling blur() triggers the emitting the nameChange event.  We
+  // call blur() directly to obtain the desired UI outcome and avoid double-calling
+  // the event.
+  // doNameChange();
+  nameEl.value.blur();
 }
 </script>
 
 <template>
-  <div class="header">
+  <form ref="formEl" class="bg-white" @submit="handleSubmit">
     <input
       ref="nameEl"
-      v-model="nameModel"
+      v-model="editedNameModel"
       type="text"
-      class="edit"
-      @keypress="handleKeyPress"
+      class="edittext mx-2 my-1"
       @focusout="handleFocusOut"
     />
-    <!-- <div v-else @click="handleNameClicked">{{ project?.name }}</div> -->
-  </div>
+  </form>
 </template>
 
-<style scoped>
-.header {
-  font-size: 1.4rem;
-  padding: 0.4rem 1rem;
-  display: flex;
-  align-items: center;
-  justify-items: center;
-  background-color: white;
-}
-.edit {
-  background-color: rgba(1, 1, 1, 0);
-  font-size: 1.4rem;
-  text-decoration: underline #000 dotted 0.08em;
-  cursor: pointer;
-}
-.edit:focus {
-  text-decoration: none;
-  cursor: text;
-}
-</style>
+<style scoped></style>
+
+<!-- @focusin="handleFocusOut" -->

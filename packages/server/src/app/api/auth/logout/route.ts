@@ -1,34 +1,20 @@
-import pool from '@/db/pool';
 import { NextResponse } from 'next/server';
-import { respondWithError, LoginError } from '../../errors';
+import { respondWithError } from '../../errors';
+import { getSession } from '@/actions/session';
 
 /**
  * POST /auth/logout
  */
-export async function POST(request: Request) {
-  const requestJson = await request.json();
-  const { username, password } = requestJson;
-
-  if (!username) {
-    return respondWithError(new Error('Missing username or email'));
-  }
-  if (!password) {
-    return respondWithError(new LoginError('Missing password'));
-  }
-
+export async function POST(_request: Request) {
   try {
-    const { rows } = await pool.query(
-      `
-      SELECT * FROM Account
-      WHERE (username=$1 OR email=$1) AND password_hash=$2
-      RETURNING id, username, email
-      `,
-      [username, password],
-    );
-    if (!rows.length) {
-      throw new LoginError('Invalid user/password.');
+    const session = await getSession();
+    if (session.user) {
+      session.user = null;
+      await session.save();
     }
-    return NextResponse.json(rows[0]);
+    session.destroy();
+
+    return NextResponse.json({}, { status: 200 });
   } catch (error) {
     return respondWithError(error as Error);
   }

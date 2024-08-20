@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, provide, Ref, ref, shallowRef, watchEffect } from 'vue';
+import { onMounted, provide, ref, shallowRef, watch } from 'vue';
 
 import { useRoute } from 'vue-router';
 import ShaderCode from '../../shader/shaderCode';
@@ -13,6 +13,9 @@ import ShaderPageHeader from './ShaderPageHeader.vue';
 import { useProjectApi } from '../../clientApi/useProjectApi';
 import { ProjectData } from 'shade-common';
 
+const props = defineProps<{
+  id: string;
+}>();
 const emit = defineEmits<{
   contentChanged: [code: string];
 }>();
@@ -22,13 +25,13 @@ const monacoEditor = shallowRef(new MonacoEditor());
 const route = useRoute();
 route.params;
 
-const param_id: Ref<string> = ref(
-  route.params.id instanceof Array ? route.params.id[0] : route.params.id,
-);
+// const param_id: Ref<string> = ref(
+//   route.params.id instanceof Array ? route.params.id[0] : route.params.id,
+// );
 
 // Code that reflects the current state of the editor.
 const initialCode = ref<ShaderCode>();
-const currentCode = ref<ShaderCode>();
+const renderedCode = ref<ShaderCode>();
 const isEdited = ref(false);
 const notFound = ref(false);
 
@@ -36,15 +39,14 @@ const { project, fetchProject, createProject, updateProject } = useProjectApi();
 const currentProject = ref<ProjectData>();
 
 function handleContentChanged(newCode: string) {
-  currentCode.value = new ShaderCode(newCode);
+  renderedCode.value = new ShaderCode(newCode);
   isEdited.value = true;
   emit('contentChanged', newCode);
 }
 
-watchEffect(() => {
-  if (project.value) {
-    initialCode.value = new ShaderCode(project.value.code);
-  } else if (currentProject.value) {
+watch(currentProject, () => {
+  console.log('currentProject changed', currentProject.value);
+  if (currentProject.value) {
     initialCode.value = new ShaderCode(currentProject.value?.code);
   }
 });
@@ -61,22 +63,24 @@ async function handleSaveButtonPressed() {
     }
     router.replace(`/shader/${project.value.id}`);
   } else {
-    project.value.code = currentCode.value?.userSource || '';
+    project.value.code = renderedCode.value?.userSource || '';
     await updateProject(project.value?.id, project.value);
   }
 }
 
 onMounted(async () => {
-  const id = param_id.value;
-  // If no id, load default otherwise load shader from server.
-  if (id) {
-    await fetchProject(id);
-  } else {
+  if (props.id === '') {
     currentProject.value = {
       name: 'New project',
       description: 'My new shader project.',
       code: ShaderCode.default().userSource,
     };
+  }
+  const id = parseInt(props.id);
+  if (id) {
+    await fetchProject(id);
+  } else {
+    router.replace('/shader');
   }
 });
 
@@ -147,9 +151,13 @@ function handlePointerDown(event: PointerEvent) {
 }
 
 function handleNameChanged(newName: string) {
-  if (project.value) {
-    project.value.name = newName;
-    //TODO send update name
+  if (currentProject.value) {
+    currentProject.value = {
+      ...currentProject.value,
+      name: newName,
+    };
+
+    // TODO: send update name
   }
 }
 
@@ -157,17 +165,20 @@ function handleNameChanged(newName: string) {
 </script>
 
 <template>
-  <div ref="mainEl" class="main">
-    <ShaderPageHeader :project="project" @nameChanged="handleNameChanged" />
-    <div class="body">
+  <div ref="mainEl" class="flex flex-col h-full">
+    <ShaderPageHeader
+      :project="currentProject"
+      @nameChanged="handleNameChanged"
+    />
+    <div class="flex h-full">
       <div v-if="notFound" class="not-found">
         <h1>Shader not found</h1>
       </div>
-      <div v-else class="left" :style="{ width: `${splitRatio * 100}%` }">
+      <div v-else class="relative" :style="{ width: `${splitRatio * 100}%` }">
         <div class="preview">
           <RenderView
             :rendererConstructor="BaseRenderer"
-            :shaderCode="currentCode || initialCode"
+            :shaderCode="renderedCode || initialCode"
           />
         </div>
       </div>
@@ -185,8 +196,8 @@ function handleNameChanged(newName: string) {
           <div class="nub"></div>
         </div>
       </div>
-      <div class="edit">
-        <div class="toolbar">
+      <div class="flex flex-col w-full h-full">
+        <div class="flex w-full">
           <button
             type="button"
             class="btn save"
@@ -209,13 +220,13 @@ function handleNameChanged(newName: string) {
 </template>
 
 <style scoped>
-.main {
+/* .main {
   display: flex;
   flex-direction: column;
   height: 100%;
   background-color: gray;
-}
-.body {
+} */
+/* .body {
   display: flex;
   height: 100%;
 }
@@ -229,7 +240,6 @@ function handleNameChanged(newName: string) {
   flex-grow: 1;
   height: 100%;
   position: relative;
-  /* padding: 0.3rem; */
 }
 
 .toolbar {
@@ -238,9 +248,9 @@ function handleNameChanged(newName: string) {
   background-color: #1e1e1e;
   padding: 0.5rem;
   gap: 0.4rem;
-}
+} */
 
-.btn {
+/* .btn {
   background-color: #bababa;
   color: white;
   padding: 0.5rem;
@@ -248,8 +258,8 @@ function handleNameChanged(newName: string) {
   cursor: pointer;
   user-select: none;
   border-radius: 4px;
-}
-.btn:hover {
+} */
+/* .btn:hover {
   background-color: #45a049;
 }
 .btn:active {
@@ -267,7 +277,7 @@ function handleNameChanged(newName: string) {
 }
 .save:active {
   background-color: #3e8e41;
-}
+} */
 
 /**
  * Divider styles

@@ -5,8 +5,6 @@
 
   - Copy and Edit both to new Shader with `source_project_id`.
 
-- [ ] Saving shader code files.
-- [ ] Loading shader code files.
 - [ ] Finish transitioning to Renderer/ShaderModule/ShaderCode object models.
 - [ ] Cleanup legacy codes afterwards.
 - [ ] Action model.
@@ -17,7 +15,7 @@
 ##### P2
 
 - [ ] Add import semantics for shader preprocessing.
-- [ ] Read: https://nuxt.com/blog/nuxt-on-the-edge
+- [ ] Move Icons to own dir.
 
 ##### Starter Templates
 
@@ -33,3 +31,5 @@
 ##### Done
 
 - [x] Perlin noise.
+- [x] Saving shader code files.
+- [x] Loading shader code files.

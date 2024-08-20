@@ -55,7 +55,6 @@ export async function POST(request: Request) {
     const session = await getSession();
     session.user = user;
     await session.save();
-    console.log('Session createdfor:', user, session);
 
     return Response.json(
       {

@@ -59,6 +59,10 @@ const nextConfig = {
             value:
               'X-CSRF-Token, X-Requested-With, Accept, Content-Type, Authorization, Redirect',
           },
+          {
+            key: 'Access-Control-Allow-Credentials',
+            value: 'true',
+          },
         ],
       },
     ];

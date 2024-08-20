@@ -1,0 +1,124 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  height: 100%;
+}
+body {
+  @apply bg-pink-100 bg-gradient-to-b from-indigo-100/20 to-indigo-100;
+  height: 100%;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* :root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: inherit;
+}
+a:hover {
+  color: #535bf2;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #1a1a1a;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+button:hover {
+  border-color: #646cff;
+}
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+  a:hover {
+    color: #747bff;
+  }
+  button {
+    background-color: #f9f9f9;
+  }
+} */
+
+@layer components {
+  .x {
+    @apply flex w-full h-full items-center justify-center;
+  }
+  .xd {
+    @apply bg-rose-200 border-rose-500 border-4;
+  }
+  .xd2 {
+    @apply bg-lime-200 border-lime-500 border-4;
+  }
+  form .input {
+    @apply block mt-1 w-full rounded-md border-2 border-gray-200 py-2 px-3 shadow-sm;
+    @apply focus:ring-4 focus:ring-blue-200/50 focus:border-blue-300 outline-none;
+  }
+  .btn {
+    @apply select-none cursor-pointer inline-flex items-center justify-center;
+    @apply px-2 py-1 text-xs;
+    @apply focus:ring-4 focus:ring-blue-200/50 focus:border-blue-300 outline-none;
+    @apply hover:shadow-inner active:shadow-gray-300/50;
+  }
+  .btn.lg {
+    @apply px-4 py-2 font-normal rounded-lg;
+    @apply hover:shadow-inner active:shadow-gray-300/50;
+    @apply text-gray-800 border border-gray-200 bg-gradient-to-b from-white to-gray-100;
+  }
+  .btn.sm {
+    @apply px-2 py-1 text-xs;
+    @apply bg-gray-500 text-white hover:bg-gray-600 rounded-md;
+  }
+  .btn.green {
+    @apply bg-green-500 text-white hover:bg-green-600 disabled:bg-gray-500;
+  }
+  .devinfo {
+    @apply text-gray-300 bg-black/20;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  }
+}

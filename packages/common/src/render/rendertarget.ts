@@ -1,5 +1,5 @@
 import { Size } from '../types';
-import { RendererContext, RenderSize } from './renderer';
+import { RenderSize } from './renderer';
 
 export interface RenderTargetInterface {
   colorTextureView: GPUTextureView;
@@ -13,10 +13,11 @@ export class RenderTarget {
   public depthTextureView?: GPUTextureView;
 
   constructor(
-    public context: RendererContext,
+    device: GPUDevice,
+    canvasContext: GPUCanvasContext,
     public has_depth?: boolean,
   ) {
-    const currentTexture = this.context.context.getCurrentTexture();
+    const currentTexture = canvasContext.getCurrentTexture();
     this.colorTextureView = currentTexture.createView();
     this.renderSize = new Size(currentTexture.width, currentTexture.height);
 
@@ -24,10 +25,7 @@ export class RenderTarget {
       throw new Error('Render size is 0');
     }
     if (this.has_depth) {
-      this.depthTexture = createDepthTexture(
-        this.context.device,
-        this.renderSize,
-      );
+      this.depthTexture = createDepthTexture(device, this.renderSize);
       this.depthTextureView = this.depthTexture.createView();
     }
   }
