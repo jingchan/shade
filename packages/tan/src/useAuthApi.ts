@@ -24,20 +24,20 @@ function useAuthApi() {
     console.log('saved', localStorage.getItem(AUTH_USER_KEY));
   }
 
-  function loadSessionUser(): User | null {
-    const userString = localStorage.getItem(AUTH_USER_KEY);
-    console.log('loadsession', userString);
-    if (userString) {
-      try {
-        // setSessionUser(JSON.parse(userString) as User);
-        return JSON.parse(userString) as User;
-      } catch (e: unknown) {
-        console.log('Parse error:', e);
-        return null;
-      }
-    }
-    return null;
-  }
+  // function loadSessionUser(): User | null {
+  //   const userString = localStorage.getItem(AUTH_USER_KEY);
+  //   console.log('loadsession', userString);
+  //   if (userString) {
+  //     try {
+  //       // setSessionUser(JSON.parse(userString) as User);
+  //       return JSON.parse(userString) as User;
+  //     } catch (e: unknown) {
+  //       console.log('Parse error:', e);
+  //       return null;
+  //     }
+  //   }
+  //   return null;
+  // }
 
   // Function to check session
   // const validateSession = async () => {

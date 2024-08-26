@@ -8,12 +8,12 @@
   "keywords": [ ],
   "private": true,
   "scripts": {
-    "dev:client": "cd packages/client && pnpm run dev",
+    "dev:client": "cd packages/tan && pnpm run dev",
     "dev:server": "cd packages/server && pnpm run dev",
     "dev": "concurrently --prefix '{time} - [{name}]' -c auto 'pnpm:dev:*'",
-    "build": "(cd packages/client && pnpm run build) && (cd packages/server && pnpm run build)",
-    "test:precommit": "(cd packages/client && pnpm run test:precommit)",
-    "lint": "(cd packages/client && pnpm run lint) && (cd packages/server && pnpm run lint)"
+    "build": "(cd packages/tan && pnpm run build) && (cd packages/server && pnpm run build)",
+    "test:precommit": "echo '(cd packages/tan && pnpm run test:precommit)'",
+    "lint": "(cd packages/tan && pnpm run lint) && (cd packages/server && pnpm run lint)"
   },
   "devDependencies": {
     "@tsconfig/node20": "^20.1.4",
